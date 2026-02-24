@@ -4,6 +4,8 @@ A visual drag-and-drop editor for [Mermaid.js](https://mermaid.js.org) flowchart
 
 No account. No cloud. Runs locally.
 
+**[→ Try the live demo](https://mermaid-visual-editor-delta.vercel.app/)**
+
 ![Mermaid Visual Editor screenshot](docs/screenshot.png)
 
 ---
