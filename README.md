@@ -4,6 +4,8 @@ A visual drag-and-drop editor for [Mermaid.js](https://mermaid.js.org) flowchart
 
 No account. No cloud. Runs locally.
 
+![Mermaid Visual Editor screenshot](docs/screenshot.png)
+
 ---
 
 ## Why
@@ -15,7 +17,7 @@ Writing Mermaid syntax by hand works fine for small diagrams. As diagrams grow, 
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/mermaid-visual-editor.git
+git clone https://github.com/saketkattu/mermaid-visual-editor.git
 cd mermaid-visual-editor
 pnpm install
 pnpm dev
