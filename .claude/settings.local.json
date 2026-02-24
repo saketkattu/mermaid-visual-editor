@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/KATTUBOINA/Documents/Experiments-Bets/visual-editor-mermaidjs && pnpm create next-app@latest . --typescript --tailwind --app --eslint --no-src-dir --import-alias \"@/*\" 2>&1)",
+      "Bash(which node && node --version && which npm && npm --version && which npx && npx --version 2>&1)",
+      "Bash(tail:*)",
+      "Bash(cd /c/Users/KATTUBOINA/Documents/Experiments-Bets && pnpm create next-app@latest next-temp --typescript --tailwind --app --eslint --no-src-dir --import-alias \"@/*\" 2>&1)",
+      "Bash(cd /c/Users/KATTUBOINA/Documents/Experiments-Bets && pnpm create next-app@latest next-temp --typescript --tailwind --app --eslint --no-src-dir --import-alias \"@/*\" --no-react-compiler 2>&1)",
+      "Bash(cd /c/Users/KATTUBOINA/Documents/Experiments-Bets/visual-editor-mermaidjs && pnpm add @xyflow/react zustand mermaid 2>&1)",
+      "Bash(cd /c/Users/KATTUBOINA/Documents/Experiments-Bets/visual-editor-mermaidjs && pnpm build 2>&1)"
+    ]
+  }
+}
