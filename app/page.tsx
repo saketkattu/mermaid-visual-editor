@@ -10,8 +10,8 @@ import { serialize } from '@/lib/serializer'
 
 function EditorContent() {
   const [previewOpen, setPreviewOpen] = useState(false)
-  const { nodes, edges } = useFlowStore()
-  const syntax = serialize(nodes, edges)
+  const { nodes, edges, direction, theme, look, curveStyle } = useFlowStore()
+  const syntax = serialize(nodes, edges, { direction, theme, look, curveStyle })
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">

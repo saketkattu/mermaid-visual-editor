@@ -1,17 +1,25 @@
 import dagre from '@dagrejs/dagre'
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowNodeData } from './store'
+import type { Direction, FlowNodeData } from './store'
 
 const NODE_WIDTH = 150
 const NODE_HEIGHT = 60
 
+const RANKDIR: Record<Direction, string> = {
+  TD: 'TB',
+  LR: 'LR',
+  BT: 'BT',
+  RL: 'RL',
+}
+
 export function applyDagreLayout(
   nodes: Node<FlowNodeData>[],
-  edges: Edge[]
+  edges: Edge[],
+  direction: Direction = 'TD'
 ): Node<FlowNodeData>[] {
   const g = new dagre.graphlib.Graph()
   g.setDefaultEdgeLabel(() => ({}))
-  g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 80 })
+  g.setGraph({ rankdir: RANKDIR[direction], nodesep: 60, ranksep: 80 })
 
   for (const node of nodes) {
     g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
