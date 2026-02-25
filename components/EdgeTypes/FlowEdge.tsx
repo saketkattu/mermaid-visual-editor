@@ -1,13 +1,8 @@
 'use client'
 
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react'
 import { useCallback, useState } from 'react'
-import { useFlowStore } from '@/lib/store'
+import { useFlowStore, type FlowEdgeData } from '@/lib/store'
 
 export function FlowEdge({
   id,
@@ -19,7 +14,8 @@ export function FlowEdge({
   targetPosition,
   label,
   markerEnd,
-  style,
+  markerStart,
+  data,
 }: EdgeProps) {
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -48,11 +44,30 @@ export function FlowEdge({
     [commitLabel]
   )
 
+  const edgeData = data as FlowEdgeData | undefined
+  const edgeStyle = edgeData?.edgeStyle ?? 'solid'
+  const strokeColor = edgeData?.strokeColor ?? '#9ca3af'
   const displayLabel = label as string | undefined
+
+  // Edge visual style
+  let strokeDasharray: string | undefined
+  let strokeWidth = 2
+  if (edgeStyle === 'dashed') strokeDasharray = '7 4'
+  if (edgeStyle === 'thick') strokeWidth = 4
 
   return (
     <>
-      <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        style={{
+          strokeDasharray,
+          strokeWidth,
+          stroke: strokeColor,
+        }}
+      />
 
       <EdgeLabelRenderer>
         <div

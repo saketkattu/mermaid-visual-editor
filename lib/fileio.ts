@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowNodeData } from './store'
-import { serialize } from './serializer'
+import type { FlowEdgeData, FlowNodeData } from './store'
+import { serialize, type SerializeOptions } from './serializer'
 
 /** Trigger a browser file download with given content */
 function download(filename: string, content: string, mimeType: string) {
@@ -13,16 +13,26 @@ function download(filename: string, content: string, mimeType: string) {
   URL.revokeObjectURL(url)
 }
 
-export function downloadMmd(nodes: Node<FlowNodeData>[], edges: Edge[]) {
-  download('diagram.mmd', serialize(nodes, edges), 'text/plain')
+export function downloadMmd(
+  nodes: Node<FlowNodeData>[],
+  edges: Edge<FlowEdgeData>[],
+  options?: SerializeOptions
+) {
+  download('diagram.mmd', serialize(nodes, edges, options), 'text/plain')
 }
 
-export function saveDiagramJson(nodes: Node<FlowNodeData>[], edges: Edge[]) {
+export function saveDiagramJson(
+  nodes: Node<FlowNodeData>[],
+  edges: Edge<FlowEdgeData>[]
+) {
   const payload = JSON.stringify({ nodes, edges }, null, 2)
   download('diagram.json', payload, 'application/json')
 }
 
-export function loadDiagramJson(): Promise<{ nodes: Node<FlowNodeData>[]; edges: Edge[] }> {
+export function loadDiagramJson(): Promise<{
+  nodes: Node<FlowNodeData>[]
+  edges: Edge<FlowEdgeData>[]
+}> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input')
     input.type = 'file'

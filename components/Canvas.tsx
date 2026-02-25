@@ -19,31 +19,68 @@ const nodeTypes = { flowNode: FlowNode }
 const edgeTypes = { flowEdge: FlowEdge }
 
 function CanvasInner() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode, addNodeAtPosition } =
-    useFlowStore()
+  const {
+    nodes, edges,
+    onNodesChange, onEdgesChange, onConnect,
+    addNode, addNodeAtPosition,
+    undo, redo, duplicateSelected,
+    pushHistory,
+  } = useFlowStore()
   const { screenToFlowPosition } = useReactFlow()
 
-  // N key → add node at canvas center (only when not typing in an input)
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
-      if (e.key === 'n' || e.key === 'N') {
+      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+
+      // N → add node (when not typing)
+      if (!isTyping && (e.key === 'n' || e.key === 'N')) {
         addNode()
+        return
+      }
+
+      const ctrl = e.ctrlKey || e.metaKey
+
+      // Ctrl+Z → undo
+      if (ctrl && !e.shiftKey && e.key === 'z') {
+        e.preventDefault()
+        undo()
+        return
+      }
+
+      // Ctrl+Shift+Z or Ctrl+Y → redo
+      if ((ctrl && e.shiftKey && e.key === 'z') || (ctrl && e.key === 'y')) {
+        e.preventDefault()
+        redo()
+        return
+      }
+
+      // Ctrl+D → duplicate selected
+      if (ctrl && e.key === 'd') {
+        e.preventDefault()
+        duplicateSelected()
+        return
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [addNode])
+  }, [addNode, undo, redo, duplicateSelected])
 
-  // Double-click on empty canvas pane → add node at click position
+  // ── Double-click on blank canvas → add node at cursor ─────────────────────
   const handleDoubleClick = (e: MouseEvent) => {
-    // Ignore double-clicks on nodes, edges, or controls
     const target = e.target as Element
-    if (target.closest('.react-flow__node') || target.closest('.react-flow__edge')) return
-    if (target.closest('.react-flow__controls') || target.closest('.react-flow__minimap')) return
+    if (target.closest('.react-flow__node')) return
+    if (target.closest('.react-flow__edge')) return
+    if (target.closest('.react-flow__controls')) return
+    if (target.closest('.react-flow__minimap')) return
     const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     addNodeAtPosition(position)
+  }
+
+  // ── Push history after drag ends (so undo restores drag positions) ─────────
+  const handleNodeDragStop = () => {
+    pushHistory()
   }
 
   return (
@@ -56,6 +93,7 @@ function CanvasInner() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStop={handleNodeDragStop}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         className="bg-gray-50"
@@ -70,7 +108,9 @@ function CanvasInner() {
           <div className="text-center text-gray-400">
             <p className="text-lg font-medium">Canvas is empty</p>
             <p className="text-sm mt-1">
-              Double-click canvas or press <kbd className="px-1 py-0.5 rounded bg-gray-100 text-gray-500 text-xs font-mono">N</kbd> to add a node
+              Double-click canvas or press{' '}
+              <kbd className="px-1 py-0.5 rounded bg-gray-100 text-gray-500 text-xs font-mono">N</kbd>{' '}
+              to add a node
             </p>
           </div>
         </div>
@@ -79,7 +119,6 @@ function CanvasInner() {
   )
 }
 
-// CanvasInner needs to be inside ReactFlowProvider — exported wrapper stays clean
 export function Canvas() {
   return <CanvasInner />
 }
