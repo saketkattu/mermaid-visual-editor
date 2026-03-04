@@ -193,12 +193,10 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
 
   const selectedNodes = useFlowStore(useShallow((s) => s.nodes.filter((n) => n.selected)))
   const selectedEdges = useFlowStore(useShallow((s) => s.edges.filter((e) => e.selected)))
-  const subgraphNodes = useFlowStore(useShallow((s) => s.nodes.filter((n) => n.data.isSubgraph)))
   const hasNodeSelection = selectedNodes.length > 0
   const hasEdgeSelection = selectedEdges.length > 0
   const selectableNodes = selectedNodes.filter((n) => !n.data.isSubgraph)
   const selectedWithParent = selectableNodes.filter((n) => n.parentId)
-  const canAssign = selectableNodes.length > 0 && subgraphNodes.length > 0
 
   const displayShape = selectedNodes.length === 1 ? selectedNodes[0].data.shape : activeShape
   const firstEdgeData = hasEdgeSelection ? (selectedEdges[0].data as FlowEdgeData | undefined) : undefined
@@ -286,28 +284,6 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
         {/* Subgraph controls */}
         <FloatingPanel>
           <Btn onClick={() => addSubgraph()} title="Add a group/subgraph container">⬡ Group</Btn>
-          {canAssign && (
-            <>
-              <Divider />
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    assignToSubgraph(selectableNodes.map((n) => n.id), e.target.value)
-                    e.target.value = ''
-                  }
-                }}
-                className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2 focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
-                title="Assign selected nodes to group"
-                aria-label="Assign to group"
-                defaultValue=""
-              >
-                <option value="" disabled>Assign to…</option>
-                {subgraphNodes.map((sg) => (
-                  <option key={sg.id} value={sg.id}>{sg.data.label as string}</option>
-                ))}
-              </select>
-            </>
-          )}
           {selectedWithParent.length > 0 && (
             <>
               <Divider />

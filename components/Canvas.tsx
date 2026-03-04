@@ -79,16 +79,33 @@ function CanvasInner() {
     addNodeAtPosition(position)
   }
 
-  // ── Push history after drag ends; auto-assign to subgraph if dropped inside ─
+  // ── Push history after drag ends; auto-assign/unassign group membership ─────
   const handleNodeDragStop = useCallback(
     (_event: MouseEvent, draggedNode: Node<FlowNodeData>) => {
       pushHistory()
-      if (draggedNode.data.isSubgraph || draggedNode.parentId) return
+      if (draggedNode.data.isSubgraph) return
       const allNodes = useFlowStore.getState().nodes
-      const subgraphs = allNodes.filter((n) => n.data.isSubgraph)
-      if (subgraphs.length === 0) return
       const w = draggedNode.measured?.width ?? 150
       const h = draggedNode.measured?.height ?? 60
+
+      // Node already in a group — check if it was dragged outside
+      if (draggedNode.parentId) {
+        const parent = allNodes.find((n) => n.id === draggedNode.parentId)
+        if (parent) {
+          const sgW = typeof parent.style?.width === 'number' ? parent.style.width : 320
+          const sgH = typeof parent.style?.height === 'number' ? parent.style.height : 220
+          const cx = draggedNode.position.x + w / 2
+          const cy = draggedNode.position.y + h / 2
+          if (cx < 0 || cx > sgW || cy < 0 || cy > sgH) {
+            assignToSubgraph([draggedNode.id], null)
+          }
+        }
+        return
+      }
+
+      // Free node — check if dropped inside a group
+      const subgraphs = allNodes.filter((n) => n.data.isSubgraph)
+      if (subgraphs.length === 0) return
       const cx = draggedNode.position.x + w / 2
       const cy = draggedNode.position.y + h / 2
       for (const sg of subgraphs) {
