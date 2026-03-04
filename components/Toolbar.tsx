@@ -112,6 +112,7 @@ function Btn({
   disabled,
   active,
   title,
+  'aria-label': ariaLabel,
   children,
   primary,
 }: {
@@ -119,6 +120,7 @@ function Btn({
   disabled?: boolean
   active?: boolean
   title?: string
+  'aria-label'?: string
   children: React.ReactNode
   primary?: boolean
 }) {
@@ -127,8 +129,10 @@ function Btn({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={ariaLabel}
       className={[
         'px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex-shrink-0',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
         'disabled:opacity-40 disabled:cursor-not-allowed',
         primary
           ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
@@ -257,8 +261,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
       {/* ── Left corner controls ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <FloatingPanel>
-          <Btn onClick={undo} disabled={pastLength === 0} title="Undo (Ctrl+Z)">↩</Btn>
-          <Btn onClick={redo} disabled={futureLength === 0} title="Redo (Ctrl+Shift+Z)">↪</Btn>
+          <Btn onClick={undo} disabled={pastLength === 0} title="Undo (Ctrl+Z)" aria-label="Undo">↩</Btn>
+          <Btn onClick={redo} disabled={futureLength === 0} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↪</Btn>
           <Divider />
           <Btn onClick={handleLoad} title="Load diagram from .json">{loadError ? 'Err' : 'Load'}</Btn>
           <Btn onClick={() => saveDiagramJson(useFlowStore.getState().nodes, useFlowStore.getState().edges)} disabled={nodesLength === 0} title="Save as .json">Save</Btn>
@@ -272,8 +276,9 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value as Theme)}
-            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2"
+            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2 focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             title="Theme"
+            aria-label="Theme"
           >
             {THEMES.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
@@ -291,8 +296,9 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
           <select
             value={curveStyle}
             onChange={(e) => setCurveStyle(e.target.value as CurveStyle)}
-            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2"
+            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2 focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
             title="Curve Style"
+            aria-label="Curve Style"
           >
             {CURVE_STYLES.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
@@ -313,7 +319,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 type="color"
                 defaultValue={selectedNodes[0].data.fillColor ?? '#ffffff'}
                 onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { fillColor: e.target.value }))}
-                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-label="Fill Color"
               />
             </label>
             <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
@@ -322,7 +329,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 type="color"
                 defaultValue={selectedNodes[0].data.strokeColor ?? '#9ca3af'}
                 onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { strokeColor: e.target.value }))}
-                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-label="Border Color"
               />
             </label>
             <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
@@ -331,7 +339,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 type="color"
                 defaultValue={selectedNodes[0].data.textColor ?? '#1f2937'}
                 onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { textColor: e.target.value }))}
-                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-label="Text Color"
               />
             </label>
             <Btn
@@ -358,6 +367,7 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { edgeStyle: style }))}
                 active={activeEdgeStyle === style}
                 title={`${style} line`}
+                aria-label={`${style} line style`}
               >
                 {style === 'solid' ? '─' : style === 'dashed' ? '╌' : '━'}
               </Btn>
@@ -365,17 +375,19 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
             <Divider />
             {(
               [
-                { type: 'arrow',         label: '→' },
-                { type: 'none',          label: '─' },
-                { type: 'bidirectional', label: '↔' },
-                { type: 'circle',        label: '─○' },
-                { type: 'cross',         label: '─✕' },
-              ] as { type: ArrowType; label: string }[]
-            ).map(({ type, label }) => (
+                { type: 'arrow',         label: '→', ariaLabel: 'Arrow tip' },
+                { type: 'none',          label: '─', ariaLabel: 'No tip' },
+                { type: 'bidirectional', label: '↔', ariaLabel: 'Bidirectional tips' },
+                { type: 'circle',        label: '─○', ariaLabel: 'Circle tip' },
+                { type: 'cross',         label: '─✕', ariaLabel: 'Cross tip' },
+              ] as { type: ArrowType; label: string; ariaLabel: string }[]
+            ).map(({ type, label, ariaLabel }) => (
               <Btn
                 key={type}
                 onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { arrowType: type }))}
                 active={activeArrowType === type}
+                aria-label={ariaLabel}
+                title={ariaLabel}
               >
                 {label}
               </Btn>
@@ -388,8 +400,9 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 onChange={(e) =>
                   selectedEdges.forEach((ed) => updateEdgeType(ed.id, { strokeColor: e.target.value }))
                 }
-                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 title="Edge Color"
+                aria-label="Edge Color"
               />
             </label>
           </FloatingPanel>
@@ -405,9 +418,10 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 <button
                   key={shape}
                   title={hasNodeSelection ? `Change to ${label}` : label}
+                  aria-label={hasNodeSelection ? `Change to ${label}` : label}
                   onClick={() => handleShapeClick(shape)}
                   className={[
-                    'w-8 h-7 rounded-md flex items-center justify-center transition-all',
+                    'w-8 h-7 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
                     displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
                   ].join(' ')}
                 >
@@ -420,9 +434,10 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
                 <button
                   key={shape}
                   title={hasNodeSelection ? `Change to ${label}` : label}
+                  aria-label={hasNodeSelection ? `Change to ${label}` : label}
                   onClick={() => handleShapeClick(shape)}
                   className={[
-                    'w-8 h-7 rounded-md flex items-center justify-center transition-all',
+                    'w-8 h-7 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
                     displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
                   ].join(' ')}
                 >
