@@ -51,6 +51,9 @@ export type CurveStyle =
   | "stepAfter"
   | "stepBefore";
 
+// ─── Diagram type ─────────────────────────────────────────────────────────────
+export type DiagramType = "flowchart" | "sequence" | "mindmap";
+
 // ─── Data types ───────────────────────────────────────────────────────────────
 export interface FlowNodeData extends Record<string, unknown> {
   label: string;
@@ -58,6 +61,7 @@ export interface FlowNodeData extends Record<string, unknown> {
   fillColor?: string;
   strokeColor?: string;
   textColor?: string;
+  isSubgraph?: boolean;
 }
 
 export interface FlowEdgeData extends Record<string, unknown> {
@@ -75,6 +79,21 @@ type Snapshot = {
 const MAX_HISTORY = 50;
 let nodeCounter = 1;
 
+// ─── Default code templates ───────────────────────────────────────────────────
+const SEQUENCE_STARTER = `sequenceDiagram
+  Alice->>Bob: Hello Bob, how are you?
+  Bob-->>Alice: Great, thanks!
+  Alice-)Bob: See you later!`;
+
+const MINDMAP_STARTER = `mindmap
+  root((Central Idea))
+    Topic A
+      Sub-topic 1
+      Sub-topic 2
+    Topic B
+      Sub-topic 3
+    Topic C`;
+
 // ─── Store interface ──────────────────────────────────────────────────────────
 interface FlowState {
   nodes: Node<FlowNodeData>[];
@@ -85,6 +104,12 @@ interface FlowState {
   curveStyle: CurveStyle;
   past: Snapshot[];
   future: Snapshot[];
+
+  // Diagram type switcher
+  diagramType: DiagramType;
+  rawCode: string;
+  setDiagramType: (type: DiagramType) => void;
+  setRawCode: (code: string) => void;
 
   // React Flow change handlers
   onNodesChange: (changes: NodeChange[]) => void;
@@ -110,6 +135,15 @@ interface FlowState {
     nodes: Node<FlowNodeData>[],
     edges: Edge<FlowEdgeData>[],
   ) => void;
+  importDiagram: (
+    nodes: Node<FlowNodeData>[],
+    edges: Edge<FlowEdgeData>[],
+    settings: { direction: Direction; theme: Theme; look: Look; curveStyle: CurveStyle },
+  ) => void;
+
+  // Subgraph operations
+  addSubgraph: (title?: string) => void;
+  assignToSubgraph: (nodeIds: string[], subgraphId: string | null) => void;
 
   // Edge operations
   updateEdgeLabel: (id: string, label: string) => void;
@@ -181,6 +215,20 @@ export const useFlowStore = create<FlowState>((set, get) => {
     curveStyle: "basis",
     past: [],
     future: [],
+
+    diagramType: "flowchart",
+    rawCode: SEQUENCE_STARTER,
+
+    setDiagramType: (type) => {
+      const { diagramType } = get();
+      if (type === diagramType) return;
+      const updates: Partial<FlowState> = { diagramType: type };
+      if (type === "sequence" && diagramType !== "sequence") updates.rawCode = SEQUENCE_STARTER;
+      if (type === "mindmap" && diagramType !== "mindmap") updates.rawCode = MINDMAP_STARTER;
+      set(updates);
+    },
+
+    setRawCode: (rawCode) => set({ rawCode }),
 
     pushHistory: () => {
       const { nodes, edges, past } = get();
@@ -328,6 +376,65 @@ export const useFlowStore = create<FlowState>((set, get) => {
         type: "flowEdge",
       })) as Edge<FlowEdgeData>[];
       set({ nodes: stampedNodes, edges: stampedEdges });
+    }),
+
+    importDiagram: withHistory((nodes, edges, settings) => {
+      const stampedNodes = nodes.map((n) => ({ ...n, type: "flowNode" }));
+      const stampedEdges = edges.map((e) => ({
+        ...e,
+        type: "flowEdge",
+      })) as Edge<FlowEdgeData>[];
+      // Advance nodeCounter to avoid ID collisions with imported nodes
+      const maxId = stampedNodes.reduce((max, n) => {
+        const m = n.id.match(/(\d+)$/)
+        return m ? Math.max(max, parseInt(m[1], 10)) : max
+      }, 0)
+      if (maxId >= nodeCounter) nodeCounter = maxId + 1
+      set({
+        nodes: stampedNodes,
+        edges: stampedEdges,
+        direction: settings.direction,
+        theme: settings.theme,
+        look: settings.look,
+        curveStyle: settings.curveStyle,
+      });
+    }),
+
+    addSubgraph: withHistory((title = "Group") => {
+      const id = `sg_${nodeCounter++}`;
+      const offset = (nodeCounter * 30) % 200;
+      const newNode: Node<FlowNodeData> = {
+        id,
+        type: "flowNode",
+        position: { x: 200 + offset, y: 150 + offset },
+        data: { label: title, shape: "rectangle", isSubgraph: true },
+        style: { width: 320, height: 220 },
+        zIndex: -1,
+      };
+      set({ nodes: [...get().nodes, newNode] });
+    }),
+
+    assignToSubgraph: withHistory((nodeIds, subgraphId) => {
+      const { nodes } = get();
+      set({
+        nodes: nodes.map((n) => {
+          if (!nodeIds.includes(n.id)) return n;
+          if (subgraphId === null) {
+            // Remove from subgraph: restore absolute position
+            const parent = n.parentId ? nodes.find((p) => p.id === n.parentId) : null;
+            const absPos = parent
+              ? { x: parent.position.x + n.position.x, y: parent.position.y + n.position.y }
+              : n.position;
+            return { ...n, parentId: undefined, extent: undefined, position: absPos };
+          }
+          // Assign to subgraph: convert to relative position
+          const parent = nodes.find((p) => p.id === subgraphId);
+          const relPos = parent
+            ? { x: n.position.x - parent.position.x, y: n.position.y - parent.position.y }
+            : n.position;
+          return { ...n, parentId: subgraphId, extent: "parent" as const, position: relPos };
+        }),
+      });
     }),
 
     setDirection: (direction) => set({ direction }),
