@@ -84,7 +84,7 @@ function CanvasInner() {
   }
 
   return (
-    <div className="flex-1 relative" onDoubleClick={handleDoubleClick}>
+    <div className="w-full h-full relative" onDoubleClick={handleDoubleClick}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -96,11 +96,11 @@ function CanvasInner() {
         onNodeDragStop={handleNodeDragStop}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
-        className="bg-gray-50"
+        className="bg-[#f8f9fa]"
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#d1d5db" />
-        <Controls />
-        <MiniMap nodeStrokeWidth={3} zoomable pannable />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#e5e7eb" />
+        <Controls className="!mb-6 !ml-4 border-gray-200 shadow-sm rounded-lg overflow-hidden bg-white" />
+        <MiniMap nodeStrokeWidth={3} zoomable pannable className="!mb-6 !mr-4 !shadow-sm !rounded-xl overflow-hidden border border-gray-200" />
       </ReactFlow>
 
       {nodes.length === 0 && (

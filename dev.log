@@ -1,0 +1,18 @@
+
+> mermaid-visual-editor@0.1.0 dev /app
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1065ms
+○ Compiling / ...
+ GET / 200 in 12.2s (compile: 11.2s, render: 1005ms)
+ GET / 200 in 354ms (compile: 102ms, render: 252ms)

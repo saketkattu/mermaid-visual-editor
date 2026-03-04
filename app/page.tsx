@@ -14,14 +14,22 @@ function EditorContent() {
   const syntax = serialize(nodes, edges, { direction, theme, look, curveStyle })
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <Toolbar
-        onTogglePreview={() => setPreviewOpen((v) => !v)}
-        previewOpen={previewOpen}
-      />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="relative h-screen w-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
+      <div className="absolute inset-0 z-0">
         <Canvas />
-        {previewOpen && <PreviewPanel syntax={syntax} />}
+      </div>
+
+      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col p-4">
+        <Toolbar
+          onTogglePreview={() => setPreviewOpen((v) => !v)}
+          previewOpen={previewOpen}
+        />
+
+        {previewOpen && (
+          <div className="absolute right-4 top-24 bottom-4 w-[400px] pointer-events-auto shadow-2xl rounded-xl overflow-hidden border border-gray-200/50 bg-white">
+            <PreviewPanel syntax={syntax} />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -103,7 +103,7 @@ const CURVE_STYLES: { value: CurveStyle; label: string }[] = [
 // ─── Shared micro-components ──────────────────────────────────────────────────
 
 function Divider() {
-  return <div className="w-px h-6 bg-gray-200 mx-0.5 flex-shrink-0" />
+  return <div className="w-px h-6 bg-gray-200/60 mx-1 flex-shrink-0" />
 }
 
 function Btn({
@@ -112,12 +112,14 @@ function Btn({
   active,
   title,
   children,
+  primary,
 }: {
   onClick?: () => void
   disabled?: boolean
   active?: boolean
   title?: string
   children: React.ReactNode
+  primary?: boolean
 }) {
   return (
     <button
@@ -125,15 +127,25 @@ function Btn({
       disabled={disabled}
       title={title}
       className={[
-        'px-2.5 py-1 text-xs font-medium rounded border transition-colors flex-shrink-0',
+        'px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex-shrink-0',
         'disabled:opacity-40 disabled:cursor-not-allowed',
-        active
-          ? 'bg-blue-100 border-blue-300 text-blue-700'
-          : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50',
+        primary
+          ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+          : active
+          ? 'bg-blue-100 text-blue-700'
+          : 'bg-transparent text-gray-600 hover:bg-gray-100',
       ].join(' ')}
     >
       {children}
     </button>
+  )
+}
+
+function FloatingPanel({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`pointer-events-auto bg-white border border-gray-200/80 shadow-[0_4px_12px_rgb(0,0,0,0.06)] rounded-xl flex items-center p-1.5 gap-1 transition-shadow ${className}`}>
+      {children}
+    </div>
   )
 }
 
@@ -220,264 +232,221 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
   }
 
   return (
-    <div className="flex flex-col bg-white border-b border-gray-200 shadow-sm z-10">
+    <div className="flex justify-between items-start w-full">
 
-      {/* ── Main toolbar row ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 flex-wrap">
+      {/* ── Left corner controls ─────────────────────────────────────────── */}
+      <div className="flex flex-col gap-2">
+        <FloatingPanel>
+          <Btn onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">↩</Btn>
+          <Btn onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">↪</Btn>
+          <Divider />
+          <Btn onClick={handleLoad} title="Load diagram from .json">{loadError ? 'Err' : 'Load'}</Btn>
+          <Btn onClick={() => saveDiagramJson(nodes, edges)} disabled={nodes.length === 0} title="Save as .json">Save</Btn>
+          <Divider />
+          <Btn onClick={() => downloadMmd(nodes, edges, { direction, theme, look, curveStyle })} disabled={nodes.length === 0} title="Download .mmd">.mmd</Btn>
+          <Btn onClick={handleExportSvg} disabled={nodes.length === 0} title="Export as SVG">SVG</Btn>
+        </FloatingPanel>
 
-        {/* Undo / Redo */}
-        <Btn onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">↩ Undo</Btn>
-        <Btn onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">↪ Redo</Btn>
-
-        <Divider />
-
-        {/* Shape picker — 2 rows of 7 */}
-        <div className="flex flex-col gap-0.5 flex-shrink-0">
-          <div className="flex gap-0.5">
-            {ALL_SHAPES.slice(0, 7).map(({ shape, label }) => (
-              <button
-                key={shape}
-                title={hasNodeSelection ? `Change to ${label}` : label}
-                onClick={() => handleShapeClick(shape)}
-                className={[
-                  'w-8 h-6 rounded flex items-center justify-center transition-colors',
-                  displayShape === shape ? 'bg-blue-100 ring-1 ring-blue-400' : 'hover:bg-gray-100',
-                ].join(' ')}
-              >
-                <ShapeIcon shape={shape} />
-              </button>
+        {/* Settings/Theme Panel */}
+        <FloatingPanel>
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as Theme)}
+            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2"
+            title="Theme"
+          >
+            {THEMES.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
             ))}
-          </div>
-          <div className="flex gap-0.5">
-            {ALL_SHAPES.slice(7).map(({ shape, label }) => (
-              <button
-                key={shape}
-                title={hasNodeSelection ? `Change to ${label}` : label}
-                onClick={() => handleShapeClick(shape)}
-                className={[
-                  'w-8 h-6 rounded flex items-center justify-center transition-colors',
-                  displayShape === shape ? 'bg-blue-100 ring-1 ring-blue-400' : 'hover:bg-gray-100',
-                ].join(' ')}
-              >
-                <ShapeIcon shape={shape} />
-              </button>
+          </select>
+          <Divider />
+          <Btn
+            onClick={() => setLook(look === 'handDrawn' ? 'classic' : 'handDrawn')}
+            active={look === 'handDrawn'}
+            title="Toggle hand-drawn look"
+          >
+            ✏ Sketch
+          </Btn>
+          <Divider />
+          <select
+            value={curveStyle}
+            onChange={(e) => setCurveStyle(e.target.value as CurveStyle)}
+            className="text-xs bg-transparent text-gray-700 outline-none cursor-pointer py-1 px-2"
+            title="Curve Style"
+          >
+            {CURVE_STYLES.map(({ value, label }) => (
+              <option key={value} value={value}>{label}</option>
             ))}
+          </select>
+        </FloatingPanel>
+
+        {/* Selected Context properties floating below top-left items */}
+        {hasNodeSelection && (
+          <FloatingPanel className="mt-2 bg-blue-50/95 border-blue-200/60 shadow-md">
+            <span className="text-xs font-semibold text-blue-800 px-2 flex-shrink-0">
+              {selectedNodes.length === 1 ? '1 node' : `${selectedNodes.length} nodes`}
+            </span>
+            <Divider />
+            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
+              Fill
+              <input
+                type="color"
+                defaultValue={selectedNodes[0].data.fillColor ?? '#ffffff'}
+                onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { fillColor: e.target.value }))}
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
+              Border
+              <input
+                type="color"
+                defaultValue={selectedNodes[0].data.strokeColor ?? '#9ca3af'}
+                onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { strokeColor: e.target.value }))}
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
+              Text
+              <input
+                type="color"
+                defaultValue={selectedNodes[0].data.textColor ?? '#1f2937'}
+                onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { textColor: e.target.value }))}
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+              />
+            </label>
+            <Btn
+              onClick={() =>
+                selectedNodes.forEach((n) =>
+                  updateNodeStyle(n.id, { fillColor: undefined, strokeColor: undefined, textColor: undefined })
+                )
+              }
+            >
+              Reset
+            </Btn>
+          </FloatingPanel>
+        )}
+
+        {hasEdgeSelection && (
+          <FloatingPanel className="mt-2 bg-emerald-50/95 border-emerald-200/60 shadow-md">
+            <span className="text-xs font-semibold text-emerald-800 px-2 flex-shrink-0">
+              {selectedEdges.length === 1 ? '1 edge' : `${selectedEdges.length} edges`}
+            </span>
+            <Divider />
+            {(['solid', 'dashed', 'thick'] as EdgeStyle[]).map((style) => (
+              <Btn
+                key={style}
+                onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { edgeStyle: style }))}
+                active={activeEdgeStyle === style}
+                title={`${style} line`}
+              >
+                {style === 'solid' ? '─' : style === 'dashed' ? '╌' : '━'}
+              </Btn>
+            ))}
+            <Divider />
+            {(
+              [
+                { type: 'arrow',         label: '→' },
+                { type: 'none',          label: '─' },
+                { type: 'bidirectional', label: '↔' },
+                { type: 'circle',        label: '─○' },
+                { type: 'cross',         label: '─✕' },
+              ] as { type: ArrowType; label: string }[]
+            ).map(({ type, label }) => (
+              <Btn
+                key={type}
+                onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { arrowType: type }))}
+                active={activeArrowType === type}
+              >
+                {label}
+              </Btn>
+            ))}
+            <Divider />
+            <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 cursor-pointer px-1">
+              <input
+                type="color"
+                defaultValue={(selectedEdges[0].data as FlowEdgeData | undefined)?.strokeColor ?? '#9ca3af'}
+                onChange={(e) =>
+                  selectedEdges.forEach((ed) => updateEdgeType(ed.id, { strokeColor: e.target.value }))
+                }
+                className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                title="Edge Color"
+              />
+            </label>
+          </FloatingPanel>
+        )}
+      </div>
+
+      {/* ── Top Center Canvas Tools ──────────────────────────────────────── */}
+      <div className="flex gap-2 mx-4 absolute left-1/2 -translate-x-1/2 z-50">
+        <FloatingPanel className="shadow-lg">
+          <div className="flex flex-col gap-0.5 px-2 py-1">
+            <div className="flex gap-1 justify-center">
+              {ALL_SHAPES.slice(0, 7).map(({ shape, label }) => (
+                <button
+                  key={shape}
+                  title={hasNodeSelection ? `Change to ${label}` : label}
+                  onClick={() => handleShapeClick(shape)}
+                  className={[
+                    'w-8 h-7 rounded-md flex items-center justify-center transition-all',
+                    displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
+                  ].join(' ')}
+                >
+                  <ShapeIcon shape={shape} />
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 justify-center">
+              {ALL_SHAPES.slice(7).map(({ shape, label }) => (
+                <button
+                  key={shape}
+                  title={hasNodeSelection ? `Change to ${label}` : label}
+                  onClick={() => handleShapeClick(shape)}
+                  className={[
+                    'w-8 h-7 rounded-md flex items-center justify-center transition-all',
+                    displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
+                  ].join(' ')}
+                >
+                  <ShapeIcon shape={shape} />
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+          <Divider />
+          <div className="px-2">
+            <Btn onClick={() => addNode(activeShape)} primary title="Add node (N)">
+              + Add
+            </Btn>
+          </div>
+          <Divider />
+          <Btn onClick={duplicateSelected} disabled={!hasNodeSelection} title="Duplicate (Ctrl+D)">
+            ⊕ Dup
+          </Btn>
+        </FloatingPanel>
+      </div>
 
-        {/* Add Node */}
-        <button
-          onClick={() => addNode(activeShape)}
-          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors flex-shrink-0"
-          title="Add node (N)"
-        >
-          + Node
-        </button>
-
-        {/* Duplicate */}
-        <Btn onClick={duplicateSelected} disabled={!hasNodeSelection} title="Duplicate selected (Ctrl+D)">
-          ⊕ Dup
-        </Btn>
-
-        <Divider />
-
-        {/* Direction */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
+      {/* ── Right side controls ─────────────────────────────────────────── */}
+      <FloatingPanel>
+        <div className="flex items-center gap-0.5 px-1">
           {DIRECTIONS.map(({ value, label, title }) => (
             <Btn key={value} onClick={() => handleDirectionChange(value)} active={direction === value} title={title}>
               {label}
             </Btn>
           ))}
         </div>
-
-        {/* Auto Layout */}
-        <Btn onClick={handleAutoLayout} disabled={nodes.length === 0} title="Auto-arrange nodes">
+        <Divider />
+        <Btn onClick={handleAutoLayout} disabled={nodes.length === 0} title="Auto-arrange nodes (Top-to-Bottom by default)">
           ⬡ Layout
         </Btn>
-
         <Divider />
-
-        {/* Theme */}
-        <select
-          value={theme}
-          onChange={(e) => setTheme(e.target.value as Theme)}
-          className="text-xs border border-gray-300 rounded px-1.5 py-1 text-gray-600 bg-white flex-shrink-0"
-          title="Mermaid preview theme"
-        >
-          {THEMES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
-        {/* Hand-drawn toggle */}
-        <Btn
-          onClick={() => setLook(look === 'handDrawn' ? 'classic' : 'handDrawn')}
-          active={look === 'handDrawn'}
-          title="Toggle hand-drawn sketch look"
-        >
-          ✏ Sketch
+        <Btn onClick={onTogglePreview} active={previewOpen}>
+          {previewOpen ? 'Hide Preview' : 'Show Preview'}
         </Btn>
-
-        {/* Curve style */}
-        <select
-          value={curveStyle}
-          onChange={(e) => setCurveStyle(e.target.value as CurveStyle)}
-          className="text-xs border border-gray-300 rounded px-1.5 py-1 text-gray-600 bg-white flex-shrink-0"
-          title="Edge curve style"
-        >
-          {CURVE_STYLES.map(({ value, label }) => (
-            <option key={value} value={value}>{label}</option>
-          ))}
-        </select>
-
         <Divider />
-
-        {/* File ops */}
-        <Btn onClick={handleLoad} title="Load diagram from .json">{loadError ?? 'Load'}</Btn>
-        <Btn onClick={() => saveDiagramJson(nodes, edges)} disabled={nodes.length === 0} title="Save as .json">Save</Btn>
-        <Btn onClick={() => downloadMmd(nodes, edges, { direction, theme, look, curveStyle })} disabled={nodes.length === 0} title="Download .mmd">↓ .mmd</Btn>
-        <Btn onClick={handleExportSvg} disabled={nodes.length === 0} title="Export as SVG image">↓ SVG</Btn>
-
-        <div className="flex-1" />
-
-        {/* Help hint */}
-        <span className="text-xs text-gray-400 hidden xl:block flex-shrink-0">
-          Double-click canvas or press{' '}
-          <kbd className="px-1 rounded bg-gray-100 font-mono">N</kbd> to add ·
-          Double-click node/edge to rename ·{' '}
-          <kbd className="px-1 rounded bg-gray-100 font-mono">Ctrl+Z</kbd> undo
-        </span>
-
-        <Divider />
-
-        {/* Preview toggle */}
-        <button
-          onClick={onTogglePreview}
-          className={[
-            'px-2.5 py-1 text-xs font-medium rounded border transition-colors flex-shrink-0',
-            previewOpen
-              ? 'bg-gray-100 border-gray-300 text-gray-700'
-              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
-          ].join(' ')}
-        >
-          {previewOpen ? 'Hide Preview' : 'Preview'}
-        </button>
-
-        {/* Copy Syntax */}
-        <button
-          onClick={handleCopy}
-          className="px-2.5 py-1 bg-gray-800 text-white text-xs font-medium rounded hover:bg-gray-900 transition-colors min-w-[90px] flex-shrink-0"
-        >
+        <Btn onClick={handleCopy} primary={!copied}>
           {copied ? '✓ Copied!' : 'Copy Syntax'}
-        </button>
-      </div>
+        </Btn>
+      </FloatingPanel>
 
-      {/* ── Context row: selected node properties ────────────────────────── */}
-      {hasNodeSelection && (
-        <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 border-t border-blue-100 flex-wrap">
-          <span className="text-xs font-medium text-blue-600 flex-shrink-0">
-            {selectedNodes.length === 1 ? '1 node' : `${selectedNodes.length} nodes`} selected
-          </span>
-          <Divider />
-          <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-            Fill
-            <input
-              type="color"
-              defaultValue={selectedNodes[0].data.fillColor ?? '#ffffff'}
-              onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { fillColor: e.target.value }))}
-              className="w-7 h-5 rounded cursor-pointer border border-gray-300"
-            />
-          </label>
-          <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-            Border
-            <input
-              type="color"
-              defaultValue={selectedNodes[0].data.strokeColor ?? '#9ca3af'}
-              onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { strokeColor: e.target.value }))}
-              className="w-7 h-5 rounded cursor-pointer border border-gray-300"
-            />
-          </label>
-          <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-            Text
-            <input
-              type="color"
-              defaultValue={selectedNodes[0].data.textColor ?? '#1f2937'}
-              onChange={(e) => selectedNodes.forEach((n) => updateNodeStyle(n.id, { textColor: e.target.value }))}
-              className="w-7 h-5 rounded cursor-pointer border border-gray-300"
-            />
-          </label>
-          <button
-            onClick={() =>
-              selectedNodes.forEach((n) =>
-                updateNodeStyle(n.id, { fillColor: undefined, strokeColor: undefined, textColor: undefined })
-              )
-            }
-            className="text-xs text-gray-400 hover:text-gray-600 underline flex-shrink-0"
-          >
-            Reset colors
-          </button>
-        </div>
-      )}
-
-      {/* ── Context row: selected edge properties ────────────────────────── */}
-      {hasEdgeSelection && (
-        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 border-t border-emerald-100 flex-wrap">
-          <span className="text-xs font-medium text-emerald-600 flex-shrink-0">
-            {selectedEdges.length === 1 ? '1 edge' : `${selectedEdges.length} edges`} selected
-          </span>
-          <Divider />
-
-          {/* Line style */}
-          <span className="text-xs text-gray-500 flex-shrink-0">Line:</span>
-          {(['solid', 'dashed', 'thick'] as EdgeStyle[]).map((style) => (
-            <Btn
-              key={style}
-              onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { edgeStyle: style }))}
-              active={activeEdgeStyle === style}
-              title={`${style} line`}
-            >
-              {style === 'solid' ? '─' : style === 'dashed' ? '╌' : '━'}
-            </Btn>
-          ))}
-
-          <Divider />
-
-          {/* Arrow type */}
-          <span className="text-xs text-gray-500 flex-shrink-0">Arrow:</span>
-          {(
-            [
-              { type: 'arrow',         label: '→',  title: 'Arrow end' },
-              { type: 'none',          label: '─',  title: 'No arrowhead' },
-              { type: 'bidirectional', label: '↔',  title: 'Bidirectional' },
-              { type: 'circle',        label: '─○', title: 'Circle end' },
-              { type: 'cross',         label: '─✕', title: 'Cross end' },
-            ] as { type: ArrowType; label: string; title: string }[]
-          ).map(({ type, label, title }) => (
-            <Btn
-              key={type}
-              onClick={() => selectedEdges.forEach((e) => updateEdgeType(e.id, { arrowType: type }))}
-              active={activeArrowType === type}
-              title={title}
-            >
-              {label}
-            </Btn>
-          ))}
-
-          <Divider />
-
-          <label className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-            Color
-            <input
-              type="color"
-              defaultValue={(selectedEdges[0].data as FlowEdgeData | undefined)?.strokeColor ?? '#9ca3af'}
-              onChange={(e) =>
-                selectedEdges.forEach((ed) => updateEdgeType(ed.id, { strokeColor: e.target.value }))
-              }
-              className="w-7 h-5 rounded cursor-pointer border border-gray-300"
-            />
-          </label>
-        </div>
-      )}
     </div>
   )
 }

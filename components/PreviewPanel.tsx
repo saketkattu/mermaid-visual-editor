@@ -48,15 +48,15 @@ export function PreviewPanel({ syntax }: PreviewPanelProps) {
   }, [syntax])
 
   return (
-    <div className="w-96 border-l border-gray-200 bg-white flex flex-col">
-      <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-600">Mermaid Preview</span>
+    <div className="w-full h-full flex flex-col bg-white">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80 backdrop-blur-md flex items-center justify-between">
+        <span className="text-sm font-semibold text-gray-700">Mermaid Preview</span>
         {error && (
-          <span className="text-xs text-red-500">Syntax error</span>
+          <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Syntax error</span>
         )}
       </div>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 bg-white">
         {error ? (
           <div className="text-xs text-red-400 font-mono whitespace-pre-wrap bg-red-50 p-3 rounded">
             {error}
