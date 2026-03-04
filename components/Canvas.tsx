@@ -83,8 +83,27 @@ function CanvasInner() {
   const handleNodeDragStop = useCallback(
     (_event: MouseEvent, draggedNode: Node<FlowNodeData>) => {
       pushHistory()
-      if (draggedNode.data.isSubgraph) return
       const allNodes = useFlowStore.getState().nodes
+
+      // Group dragged onto free nodes — auto-assign nodes now inside it
+      if (draggedNode.data.isSubgraph) {
+        const sgW = typeof draggedNode.style?.width === 'number' ? draggedNode.style.width : 320
+        const sgH = typeof draggedNode.style?.height === 'number' ? draggedNode.style.height : 220
+        const freeNodes = allNodes.filter((n) => !n.data.isSubgraph && !n.parentId)
+        const toAssign = freeNodes.filter((n) => {
+          const nw = n.measured?.width ?? 150
+          const nh = n.measured?.height ?? 60
+          const cx = n.position.x + nw / 2
+          const cy = n.position.y + nh / 2
+          return (
+            cx >= draggedNode.position.x && cx <= draggedNode.position.x + sgW &&
+            cy >= draggedNode.position.y && cy <= draggedNode.position.y + sgH
+          )
+        })
+        if (toAssign.length > 0) assignToSubgraph(toAssign.map((n) => n.id), draggedNode.id)
+        return
+      }
+
       const w = draggedNode.measured?.width ?? 150
       const h = draggedNode.measured?.height ?? 60
 
