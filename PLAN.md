@@ -52,8 +52,18 @@ The canvas state is canonical. Mermaid syntax is always derived — never parsed
 |-------|-----------------|----------------|
 | Rectangle | default | `A[Label]` |
 | Rounded | rounded | `A(Label)` |
-| Diamond | decision | `A{Label}` |
+| Stadium | stadium | `A([Label])` |
+| Subroutine | subroutine | `A[[Label]]` |
+| Cylinder | cylinder | `A[(Label)]` |
 | Circle | circle | `A((Label))` |
+| Double Circle| doubleCircle | `A(((Label)))` |
+| Diamond | decision | `A{Label}` |
+| Hexagon | hexagon | `A{{Label}}` |
+| Parallelogram| parallelogram | `A[/Label/]` |
+| Parallelogram Alt | parallelogramAlt | `A[\Label\]` |
+| Trapezoid | trapezoid | `A[/Label\]` |
+| Trapezoid Alt| trapezoidAlt | `A[\Label/]` |
+| Asymmetric | asymmetric | `A>Label]` |
 
 ### File Structure
 
@@ -63,14 +73,16 @@ The canvas state is canonical. Mermaid syntax is always derived — never parsed
 │   ├── page.tsx              # Main editor page
 │   └── layout.tsx
 ├── components/
-│   ├── Canvas.tsx            # React Flow wrapper + event handlers
+│   ├── Canvas.tsx            # Full-screen React Flow wrapper + event handlers
 │   ├── NodeTypes/
-│   │   └── FlowNode.tsx      # Custom node with inline label editing
-│   ├── PreviewPanel.tsx      # Mermaid.js live render panel
-│   └── Toolbar.tsx           # Add node, shape picker, export, toggle preview
+│   │   └── FlowNode.tsx      # Custom node with inline label editing and multi-handles
+│   ├── PreviewPanel.tsx      # Floating Mermaid.js live render panel
+│   └── Toolbar.tsx           # Floating panels for tools, shapes, settings, and node/edge styling
 ├── lib/
+│   ├── fileio.ts             # Save/load diagram JSON + SVG export
+│   ├── layout.ts             # Dagre auto-layout logic
 │   ├── serializer.ts         # nodes[] + edges[] → Mermaid syntax string (KEY FILE)
-│   └── store.ts              # Zustand store
+│   └── store.ts              # Zustand store with history (undo/redo)
 └── package.json
 ```
 
@@ -80,19 +92,21 @@ The canvas state is canonical. Mermaid syntax is always derived — never parsed
 
 ### In Scope
 - Add nodes (toolbar button or double-click canvas)
-- Connect nodes with edges (drag from handle)
+- Connect nodes with edges (drag from handles: top, bottom, left, right)
+- Customize edges (line style, arrow type, color)
 - Rename nodes (double-click node label)
-- Node shapes: rectangle, rounded, diamond, circle
-- Edge labels
+- Customize node styles (fill color, border color, text color)
+- 14 Node shapes (Rectangle, Rounded, Diamond, Circle, Hexagon, Cylinder, etc.)
+- Diagram settings (Layout direction, theme, hand-drawn look, curve style)
 - Delete nodes/edges (Backspace/Delete key)
+- Duplicate nodes (Ctrl+D)
+- Undo/Redo (Ctrl+Z / Ctrl+Shift+Z)
 - Live Mermaid preview panel (toggleable)
-- Export: copy syntax to clipboard
-- Export: download as `.mmd` file
+- Export: copy syntax to clipboard, download as `.mmd` file, export as `.svg`
 - Save/load canvas as `.json` file
 
 ### Out of Scope (MVP)
 - Sequence diagrams, mindmaps, Gantt, ER diagrams
-- Undo/redo
 - Subgraphs
 - Import Mermaid syntax → canvas
 - Collaborative editing
@@ -124,7 +138,7 @@ Users expect Mermaid's auto-layout. This tool uses manual positioning (React Flo
 
 ## Verification
 
-1. Unit test `lib/serializer.ts`: given known node/edge arrays → assert exact Mermaid output strings
+1. Unit tests for `lib/serializer.ts`, `lib/store.ts`, and `lib/fileio.ts` using `node:test`.
 2. Manual: draw flowchart → export → paste into mermaid.live → confirm correct render
 3. Setup test: fresh clone → `pnpm install && pnpm dev` → runs without errors
 4. User test: share repo with 3-5 PKMS/Obsidian users → observe unguided usage

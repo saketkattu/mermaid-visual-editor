@@ -9,52 +9,52 @@ Status legend: `[ ]` todo · `[x]` done · `[-]` skipped/deferred
 > **Validation:** Draw a 5-node flowchart → copy syntax → paste into mermaid.live → renders correctly.
 
 ### 1.1 Project Setup
-- [ ] `pnpm create next-app@latest . --typescript --tailwind --app --eslint`
-- [ ] Install dependencies: `pnpm add reactflow zustand mermaid`
-- [ ] Install dev dependencies: `pnpm add -D @types/node`
-- [ ] Clean out default Next.js boilerplate (page.tsx, globals.css)
-- [ ] Configure `tailwind.config.ts` to include `./components/**` in content paths
-- [ ] Verify: `pnpm dev` runs at `localhost:3000` with no errors
+- [x] `pnpm create next-app@latest . --typescript --tailwind --app --eslint`
+- [x] Install dependencies: `pnpm add reactflow zustand mermaid`
+- [x] Install dev dependencies: `pnpm add -D @types/node`
+- [x] Clean out default Next.js boilerplate (page.tsx, globals.css)
+- [x] Configure `tailwind.config.ts` to include `./components/**` in content paths
+- [x] Verify: `pnpm dev` runs at `localhost:3000` with no errors
 
 ### 1.2 Canvas Setup
-- [ ] Create `components/Canvas.tsx` — React Flow wrapper with `ReactFlowProvider`
-- [ ] Add empty canvas with background grid (`<Background />` component from React Flow)
-- [ ] Add `<Controls />` (zoom in/out/reset) from React Flow
-- [ ] Set canvas to fill the full viewport height
-- [ ] Verify: blank canvas renders with grid and controls
+- [x] Create `components/Canvas.tsx` — React Flow wrapper with `ReactFlowProvider`
+- [x] Add empty canvas with background grid (`<Background />` component from React Flow)
+- [x] Add `<Controls />` (zoom in/out/reset) from React Flow
+- [x] Set canvas to fill the full viewport height
+- [x] Verify: blank canvas renders with grid and controls
 
 ### 1.3 Zustand Store
-- [ ] Create `lib/store.ts` with Zustand
-- [ ] Store shape: `{ nodes: Node[], edges: Edge[], addNode, onNodesChange, onEdgesChange, onConnect }`
-- [ ] Wire store's `onNodesChange` and `onEdgesChange` to React Flow's `onNodesChange`/`onEdgesChange` props
-- [ ] Wire store's `onConnect` to React Flow's `onConnect` prop
+- [x] Create `lib/store.ts` with Zustand
+- [x] Store shape: `{ nodes: Node[], edges: Edge[], addNode, onNodesChange, onEdgesChange, onConnect }`
+- [x] Wire store's `onNodesChange` and `onEdgesChange` to React Flow's `onNodesChange`/`onEdgesChange` props
+- [x] Wire store's `onConnect` to React Flow's `onConnect` prop
 
 ### 1.4 Add Node
-- [ ] Create `components/Toolbar.tsx` with an "Add Node" button
-- [ ] On click: dispatch `addNode` to store — adds a new node at a fixed/random position with label "Node"
-- [ ] Verify: clicking "Add Node" places a draggable node on canvas
+- [x] Create `components/Toolbar.tsx` with an "Add Node" button
+- [x] On click: dispatch `addNode` to store — adds a new node at a fixed/random position with label "Node"
+- [x] Verify: clicking "Add Node" places a draggable node on canvas
 
 ### 1.5 Basic Mermaid Serializer
-- [ ] Create `lib/serializer.ts`
-- [ ] Implement `serialize(nodes, edges): string` function
-- [ ] Output format:
+- [x] Create `lib/serializer.ts`
+- [x] Implement `serialize(nodes, edges): string` function
+- [x] Output format:
   ```
   graph TD
   A[Label]
   B[Label]
   A --> B
   ```
-- [ ] Node IDs must be valid Mermaid identifiers (alphanumeric, no spaces) — sanitize labels
-- [ ] Verify: given 2 nodes + 1 edge → correct Mermaid string returned
+- [x] Node IDs must be valid Mermaid identifiers (alphanumeric, no spaces) — sanitize labels
+- [x] Verify: given 2 nodes + 1 edge → correct Mermaid string returned
 
 ### 1.6 Copy Syntax Button
-- [ ] Add "Copy Syntax" button to Toolbar
-- [ ] On click: call `serialize(nodes, edges)` → copy result to clipboard via `navigator.clipboard.writeText`
-- [ ] Show brief "Copied!" confirmation (simple state toggle, 1.5s timeout)
-- [ ] Verify: click button → paste into mermaid.live → diagram renders
+- [x] Add "Copy Syntax" button to Toolbar
+- [x] On click: call `serialize(nodes, edges)` → copy result to clipboard via `navigator.clipboard.writeText`
+- [x] Show brief "Copied!" confirmation (simple state toggle, 1.5s timeout)
+- [x] Verify: click button → paste into mermaid.live → diagram renders
 
 ### M1 Checkpoint
-- [ ] Draw 5 nodes, connect them, copy syntax, verify in mermaid.live
+- [x] Draw 5 nodes, connect them, copy syntax, verify in mermaid.live
 
 ---
 
@@ -63,58 +63,58 @@ Status legend: `[ ]` todo · `[x]` done · `[-]` skipped/deferred
 > **Validation:** Recreate a real diagram (e.g., a user auth flow) without touching raw Mermaid syntax.
 
 ### 2.1 Custom Node Component
-- [ ] Create `components/NodeTypes/FlowNode.tsx`
-- [ ] Node renders a label that is double-clickable to edit (use `<input>` with `contentEditable` or controlled input)
-- [ ] On blur or Enter: commit label, update node data in store
-- [ ] Register node type in React Flow: `nodeTypes={{ flowNode: FlowNode }}`
-- [ ] Update `addNode` in store to use `type: 'flowNode'`
+- [x] Create `components/NodeTypes/FlowNode.tsx`
+- [x] Node renders a label that is double-clickable to edit (use `<input>` with `contentEditable` or controlled input)
+- [x] On blur or Enter: commit label, update node data in store
+- [x] Register node type in React Flow: `nodeTypes={{ flowNode: FlowNode }}`
+- [x] Update `addNode` in store to use `type: 'flowNode'`
 
 ### 2.2 Node Shapes
-- [ ] Add `shape` field to node data: `'rectangle' | 'rounded' | 'diamond' | 'circle'`
-- [ ] In `FlowNode.tsx`, apply different CSS border styles per shape:
+- [x] Add `shape` field to node data: `'rectangle' | 'rounded' | 'diamond' | 'circle'`
+- [x] In `FlowNode.tsx`, apply different CSS border styles per shape:
   - rectangle: default square borders
   - rounded: `border-radius: 9999px` (pill) or moderate rounding
   - diamond: CSS rotate transform + clip
   - circle: `border-radius: 50%`, fixed equal width/height
-- [ ] Update `serialize()` in `lib/serializer.ts` to use shape for Mermaid syntax:
+- [x] Update `serialize()` in `lib/serializer.ts` to use shape for Mermaid syntax:
   - rectangle → `A[Label]`
   - rounded → `A(Label)`
   - diamond → `A{Label}`
   - circle → `A((Label))`
-- [ ] Add shape picker to Toolbar (4 icon buttons or a dropdown)
-- [ ] Shape picker sets the shape for the NEXT added node (or selected node if selection is implemented)
+- [x] Add shape picker to Toolbar (4 icon buttons or a dropdown)
+- [x] Shape picker sets the shape for the NEXT added node (or selected node if selection is implemented)
 
 ### 2.3 Edge Labels
-- [ ] React Flow edges support `label` prop natively — expose this in the UI
-- [ ] On edge double-click: show an inline input for the edge label
-- [ ] Store edge label in edge data
-- [ ] Update `serialize()` to emit: `A -->|label| B` when edge has a label
-- [ ] Verify: label appears on edge in canvas and in serialized output
+- [x] React Flow edges support `label` prop natively — expose this in the UI
+- [x] On edge double-click: show an inline input for the edge label
+- [x] Store edge label in edge data
+- [x] Update `serialize()` to emit: `A -->|label| B` when edge has a label
+- [x] Verify: label appears on edge in canvas and in serialized output
 
 ### 2.4 Delete Nodes and Edges
-- [ ] Listen for `keydown` event on the canvas wrapper
-- [ ] On Backspace or Delete: remove selected nodes and their connected edges from store
-- [ ] React Flow exposes `onNodesDelete` and `onEdgesDelete` callbacks — use these
-- [ ] Verify: select node → press Delete → node and its edges removed
+- [x] Listen for `keydown` event on the canvas wrapper
+- [x] On Backspace or Delete: remove selected nodes and their connected edges from store
+- [x] React Flow exposes `onNodesDelete` and `onEdgesDelete` callbacks — use these
+- [x] Verify: select node → press Delete → node and its edges removed
 
 ### 2.5 Live Mermaid Preview Panel
-- [ ] Create `components/PreviewPanel.tsx`
-- [ ] Accept `syntax: string` prop
-- [ ] On mount and when `syntax` changes: call `mermaid.render('preview', syntax)` → inject SVG into panel
-- [ ] Handle mermaid render errors gracefully (show error message, keep last valid render)
-- [ ] Add "Toggle Preview" button in Toolbar — show/hide panel via state
-- [ ] Panel renders as a fixed right sidebar (e.g., `w-96`)
-- [ ] Initialize mermaid in `useEffect` on app load: `mermaid.initialize({ startOnLoad: false, theme: 'default' })`
+- [x] Create `components/PreviewPanel.tsx`
+- [x] Accept `syntax: string` prop
+- [x] On mount and when `syntax` changes: call `mermaid.render('preview', syntax)` → inject SVG into panel
+- [x] Handle mermaid render errors gracefully (show error message, keep last valid render)
+- [x] Add "Toggle Preview" button in Toolbar — show/hide panel via state
+- [x] Panel renders as a fixed right sidebar (e.g., `w-96`)
+- [x] Initialize mermaid in `useEffect` on app load: `mermaid.initialize({ startOnLoad: false, theme: 'default' })`
 
 ### 2.6 Selection Handling
-- [ ] React Flow tracks selected nodes via `selected` prop on node data
-- [ ] When a node is selected: Toolbar shape picker changes the selected node's shape (not just next-added)
-- [ ] Visual: selected node has highlighted border
+- [x] React Flow tracks selected nodes via `selected` prop on node data
+- [x] When a node is selected: Toolbar shape picker changes the selected node's shape (not just next-added)
+- [x] Visual: selected node has highlighted border
 
 ### M2 Checkpoint
-- [ ] Draw a user auth flow (Register → Verify Email → Login → Dashboard) with decision diamonds
-- [ ] Toggle preview → Mermaid renders correctly
-- [ ] Edit labels inline, delete nodes, verify preview updates
+- [x] Draw a user auth flow (Register → Verify Email → Login → Dashboard) with decision diamonds
+- [x] Toggle preview → Mermaid renders correctly
+- [x] Edit labels inline, delete nodes, verify preview updates
 
 ---
 
@@ -123,34 +123,34 @@ Status legend: `[ ]` todo · `[x]` done · `[-]` skipped/deferred
 > **Validation:** Fresh clone → `pnpm install && pnpm dev` → working editor in browser.
 
 ### 3.1 Download as .mmd
-- [ ] Add "Download .mmd" button to Toolbar
-- [ ] On click: call `serialize()` → create Blob → trigger download via `<a>` element with `download` attribute
-- [ ] Filename: `diagram.mmd`
+- [x] Add "Download .mmd" button to Toolbar
+- [x] On click: call `serialize()` → create Blob → trigger download via `<a>` element with `download` attribute
+- [x] Filename: `diagram.mmd`
 
 ### 3.2 Save Canvas as JSON
-- [ ] Add "Save" button to Toolbar
-- [ ] Serialize `{ nodes, edges }` as JSON → download as `diagram.json`
-- [ ] Add "Load" button → file input (accept `.json`) → parse and load nodes/edges into store
+- [x] Add "Save" button to Toolbar
+- [x] Serialize `{ nodes, edges }` as JSON → download as `diagram.json`
+- [x] Add "Load" button → file input (accept `.json`) → parse and load nodes/edges into store
 
 ### 3.3 Auto-Layout (Dagre)
-- [ ] Install: `pnpm add @dagrejs/dagre`
-- [ ] Create `lib/layout.ts` — implement `applyDagreLayout(nodes, edges): Node[]`
-- [ ] Use `dagre.graphlib.Graph`, set `rankdir: 'TB'` (top-to-bottom)
-- [ ] Add "Auto Layout" button to Toolbar → applies layout, updates node positions in store
-- [ ] Verify: messy graph → click Auto Layout → clean top-down arrangement
+- [x] Install: `pnpm add @dagrejs/dagre`
+- [x] Create `lib/layout.ts` — implement `applyDagreLayout(nodes, edges): Node[]`
+- [x] Use `dagre.graphlib.Graph`, set `rankdir: 'TB'` (top-to-bottom)
+- [x] Add "Auto Layout" button to Toolbar → applies layout, updates node positions in store
+- [x] Verify: messy graph → click Auto Layout → clean top-down arrangement
 
 ### 3.4 Keyboard Shortcuts
-- [ ] `N` — add a new node at canvas center
-- [ ] `Backspace` / `Delete` — delete selected nodes/edges (already done in M2, confirm works)
-- [ ] `Escape` — deselect all
-- [ ] Add keyboard shortcut legend in a `?` help tooltip in the UI corner
+- [x] `N` — add a new node at canvas center
+- [x] `Backspace` / `Delete` — delete selected nodes/edges (already done in M2, confirm works)
+- [x] `Escape` — deselect all
+- [x] Add keyboard shortcut legend in a `?` help tooltip in the UI corner
 
 ### 3.5 Empty State
-- [ ] When canvas has no nodes: show centered placeholder text "Double-click to add a node, or click Add Node in the toolbar"
-- [ ] Implement double-click on canvas background → adds node at click position
+- [x] When canvas has no nodes: show centered placeholder text "Double-click to add a node, or click Add Node in the toolbar"
+- [x] Implement double-click on canvas background → adds node at click position
 
 ### 3.6 README
-- [ ] Write `README.md` covering:
+- [x] Write `README.md` covering:
   - What it is (1 sentence)
   - Screenshot or GIF of the editor in use
   - Quick start: `git clone` → `pnpm install` → `pnpm dev`
@@ -160,15 +160,63 @@ Status legend: `[ ]` todo · `[x]` done · `[-]` skipped/deferred
   - License
 
 ### 3.7 Open Source Hygiene
-- [ ] Add `LICENSE` file (MIT)
-- [ ] Add `.gitignore` (Next.js standard)
-- [ ] Add `.nvmrc` or `engines` field in `package.json` specifying Node version
-- [ ] Initialize git repo: `git init` → initial commit
-- [ ] Push to GitHub as public repo
+- [x] Add `LICENSE` file (MIT)
+- [x] Add `.gitignore` (Next.js standard)
+- [x] Add `.nvmrc` or `engines` field in `package.json` specifying Node version
+- [x] Initialize git repo: `git init` → initial commit
+- [x] Push to GitHub as public repo
 
 ### M3 Checkpoint
-- [ ] Fresh clone on a clean machine → `pnpm install && pnpm dev` → editor opens
-- [ ] Full workflow: add nodes → shape them → connect → auto-layout → toggle preview → download .mmd
+- [x] Fresh clone on a clean machine → `pnpm install && pnpm dev` → editor opens
+- [x] Full workflow: add nodes → shape them → connect → auto-layout → toggle preview → download .mmd
+
+---
+
+## Phase 1 — Flowchart Capabilities
+> **Goal:** Enhance diagramming capabilities to support ~80% of Mermaid's full flowchart feature set.
+
+### P1.1 Advanced Node Shapes
+- [x] Stadium/Pill (`[label]`)
+- [x] Subroutine (`[[label]]`)
+- [x] Cylinder (`[(label)]`)
+- [x] Hexagon (`{{label}}`)
+- [x] Parallelogram (`[/label/]`)
+- [x] Parallelogram-alt (`[\label\]`)
+- [x] Trapezoid (`[/label\]`)
+- [x] Trapezoid-alt (`[\label/]`)
+- [x] Double-circle (`(((label)))`)
+- [x] Asymmetric (`>label]`)
+
+### P1.2 Advanced Edge Types
+- [x] Line styles: solid / dashed / thick
+- [x] Arrow types: arrow / none / bidirectional / circle-end / cross-end
+- [x] Edge color picker
+- [x] Serialize to proper Mermaid operators (`-->`, `---`, `-.->`, `===`, etc.)
+
+### P1.3 Diagram Settings
+- [x] Direction selector (TD / LR / BT / RL)
+- [x] Theme picker (default / dark / forest / neutral / base)
+- [x] Hand-drawn sketch toggle (Mermaid `look: handDrawn`)
+- [x] Curve style selector (12 d3-shape curves)
+
+### P1.4 Node Styling
+- [x] Fill color picker
+- [x] Border color picker
+- [x] Text color picker
+- [x] Reset to defaults
+- [x] Serialize as Mermaid style definitions
+
+### P1.5 Advanced Interactions
+- [x] History: Undo / Redo (Ctrl+Z / Ctrl+Shift+Z)
+- [x] Duplicate selected nodes (Ctrl+D)
+- [x] 4 handles per node (Top/Bottom/Left/Right) for better routing
+- [x] SVG Export
+
+### P1.6 UI Redesign (Excalidraw/FigJam style)
+- [x] Full-screen canvas background
+- [x] Absolute positioned floating UI panels
+- [x] Clean, accessible toolbar grouping
+- [x] Rounded styling with backdrop blur and subtle shadows
 
 ---
 
@@ -201,9 +249,7 @@ After 2-4 weeks, evaluate:
 | Feature | Notes |
 |---------|-------|
 | Import Mermaid syntax → canvas | Requires Mermaid AST parser. Complex. High-value. |
-| Undo/redo | Use `use-undoable` or Zustand middleware |
 | Sequence diagrams | Different graph model — needs separate canvas logic |
 | Mindmap support | Tree-based layout, separate node types |
 | Obsidian plugin | Port canvas component into Obsidian plugin API |
 | Subgraphs | Nested node groups in React Flow |
-| Theming | Light/dark Mermaid themes, custom node colors |
