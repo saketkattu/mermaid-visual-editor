@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import {
   useFlowStore,
   type ArrowType,
@@ -158,22 +159,32 @@ interface ToolbarProps {
 
 export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
   const {
-    nodes, edges,
     direction, theme, look, curveStyle,
-    past, future,
     addNode, setNodes, loadDiagram,
     updateNodeShape, updateNodeStyle,
     updateEdgeType,
     setDirection, setTheme, setLook, setCurveStyle,
     undo, redo, duplicateSelected,
-  } = useFlowStore()
+  } = useFlowStore(useShallow((s) => ({
+    direction: s.direction, theme: s.theme, look: s.look, curveStyle: s.curveStyle,
+    addNode: s.addNode, setNodes: s.setNodes, loadDiagram: s.loadDiagram,
+    updateNodeShape: s.updateNodeShape, updateNodeStyle: s.updateNodeStyle,
+    updateEdgeType: s.updateEdgeType,
+    setDirection: s.setDirection, setTheme: s.setTheme, setLook: s.setLook, setCurveStyle: s.setCurveStyle,
+    undo: s.undo, redo: s.redo, duplicateSelected: s.duplicateSelected
+  })))
+
+  const pastLength = useFlowStore((s) => s.past.length)
+  const futureLength = useFlowStore((s) => s.future.length)
+  const nodesLength = useFlowStore((s) => s.nodes.length)
+
 
   const [activeShape, setActiveShape] = useState<NodeShape>('rectangle')
   const [copied, setCopied] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const selectedNodes = nodes.filter((n) => n.selected)
-  const selectedEdges = edges.filter((e) => e.selected)
+  const selectedNodes = useFlowStore(useShallow((s) => s.nodes.filter((n) => n.selected)))
+  const selectedEdges = useFlowStore(useShallow((s) => s.edges.filter((e) => e.selected)))
   const hasNodeSelection = selectedNodes.length > 0
   const hasEdgeSelection = selectedEdges.length > 0
 
@@ -189,16 +200,19 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
 
   const handleDirectionChange = (dir: Direction) => {
     setDirection(dir)
+    const { nodes, edges } = useFlowStore.getState()
     if (nodes.length > 0) setNodes(applyDagreLayout(nodes, edges, dir))
   }
 
   const handleCopy = async () => {
+    const { nodes, edges, direction, theme, look, curveStyle } = useFlowStore.getState()
     await navigator.clipboard.writeText(serialize(nodes, edges, { direction, theme, look, curveStyle }))
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
 
   const handleAutoLayout = () => {
+    const { nodes, edges, direction } = useFlowStore.getState()
     if (nodes.length === 0) return
     setNodes(applyDagreLayout(nodes, edges, direction))
   }
@@ -216,8 +230,14 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     }
   }
 
+  const handleDownloadMmd = () => {
+    const { nodes, edges, direction, theme, look, curveStyle } = useFlowStore.getState()
+    downloadMmd(nodes, edges, { direction, theme, look, curveStyle })
+  }
+
   const handleExportSvg = async () => {
     try {
+      const { nodes, edges, direction, theme, look, curveStyle } = useFlowStore.getState()
       const mermaid = (await import('mermaid')).default
       const syntax = serialize(nodes, edges, { direction, theme, look, curveStyle })
       const { svg } = await mermaid.render(`svg-export-${Date.now()}`, syntax)
@@ -237,14 +257,14 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
       {/* ── Left corner controls ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <FloatingPanel>
-          <Btn onClick={undo} disabled={past.length === 0} title="Undo (Ctrl+Z)">↩</Btn>
-          <Btn onClick={redo} disabled={future.length === 0} title="Redo (Ctrl+Shift+Z)">↪</Btn>
+          <Btn onClick={undo} disabled={pastLength === 0} title="Undo (Ctrl+Z)">↩</Btn>
+          <Btn onClick={redo} disabled={futureLength === 0} title="Redo (Ctrl+Shift+Z)">↪</Btn>
           <Divider />
           <Btn onClick={handleLoad} title="Load diagram from .json">{loadError ? 'Err' : 'Load'}</Btn>
-          <Btn onClick={() => saveDiagramJson(nodes, edges)} disabled={nodes.length === 0} title="Save as .json">Save</Btn>
+          <Btn onClick={() => saveDiagramJson(useFlowStore.getState().nodes, useFlowStore.getState().edges)} disabled={nodesLength === 0} title="Save as .json">Save</Btn>
           <Divider />
-          <Btn onClick={() => downloadMmd(nodes, edges, { direction, theme, look, curveStyle })} disabled={nodes.length === 0} title="Download .mmd">.mmd</Btn>
-          <Btn onClick={handleExportSvg} disabled={nodes.length === 0} title="Export as SVG">SVG</Btn>
+          <Btn onClick={handleDownloadMmd} disabled={nodesLength === 0} title="Download .mmd">.mmd</Btn>
+          <Btn onClick={handleExportSvg} disabled={nodesLength === 0} title="Export as SVG">SVG</Btn>
         </FloatingPanel>
 
         {/* Settings/Theme Panel */}
@@ -434,7 +454,7 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
           ))}
         </div>
         <Divider />
-        <Btn onClick={handleAutoLayout} disabled={nodes.length === 0} title="Auto-arrange nodes (Top-to-Bottom by default)">
+        <Btn onClick={handleAutoLayout} disabled={nodesLength === 0} title="Auto-arrange nodes (Top-to-Bottom by default)">
           ⬡ Layout
         </Btn>
         <Divider />
