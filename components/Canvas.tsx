@@ -7,11 +7,12 @@ import {
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useEffect, type MouseEvent } from 'react'
+import { useCallback, useEffect, type MouseEvent } from 'react'
 
-import { useFlowStore } from '@/lib/store'
+import { useFlowStore, type FlowNodeData } from '@/lib/store'
 import { FlowNode } from './NodeTypes/FlowNode'
 import { FlowEdge } from './EdgeTypes/FlowEdge'
 
@@ -24,7 +25,7 @@ function CanvasInner() {
     onNodesChange, onEdgesChange, onConnect,
     addNode, addNodeAtPosition,
     undo, redo, duplicateSelected,
-    pushHistory,
+    pushHistory, assignToSubgraph,
   } = useFlowStore()
   const { screenToFlowPosition } = useReactFlow()
 
@@ -78,10 +79,30 @@ function CanvasInner() {
     addNodeAtPosition(position)
   }
 
-  // ── Push history after drag ends (so undo restores drag positions) ─────────
-  const handleNodeDragStop = () => {
-    pushHistory()
-  }
+  // ── Push history after drag ends; auto-assign to subgraph if dropped inside ─
+  const handleNodeDragStop = useCallback(
+    (_event: MouseEvent, draggedNode: Node<FlowNodeData>) => {
+      pushHistory()
+      if (draggedNode.data.isSubgraph || draggedNode.parentId) return
+      const allNodes = useFlowStore.getState().nodes
+      const subgraphs = allNodes.filter((n) => n.data.isSubgraph)
+      if (subgraphs.length === 0) return
+      const w = draggedNode.measured?.width ?? 150
+      const h = draggedNode.measured?.height ?? 60
+      const cx = draggedNode.position.x + w / 2
+      const cy = draggedNode.position.y + h / 2
+      for (const sg of subgraphs) {
+        const sgW = typeof sg.style?.width === 'number' ? sg.style.width : 320
+        const sgH = typeof sg.style?.height === 'number' ? sg.style.height : 220
+        if (cx >= sg.position.x && cx <= sg.position.x + sgW &&
+            cy >= sg.position.y && cy <= sg.position.y + sgH) {
+          assignToSubgraph([draggedNode.id], sg.id)
+          return
+        }
+      }
+    },
+    [pushHistory, assignToSubgraph]
+  )
 
   return (
     <div className="w-full h-full relative" onDoubleClick={handleDoubleClick}>

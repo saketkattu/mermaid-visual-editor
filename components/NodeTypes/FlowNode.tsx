@@ -277,7 +277,7 @@ export function FlowNode({ id, data, selected }: NodeProps) {
         onDoubleClick={handleDoubleClick}
       >
         <NodeResizer minWidth={200} minHeight={120} isVisible={!!selected} />
-        <div className="absolute top-2 left-3 text-xs font-semibold text-gray-500 select-none pointer-events-none">
+        <div className={`absolute top-2 left-3 text-xs font-semibold text-gray-500 ${editing ? '' : 'select-none pointer-events-none'}`}>
           <NodeLabel {...labelProps} color={textColor} />
         </div>
         <NodeHandles />
