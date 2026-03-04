@@ -19,7 +19,7 @@ export function PreviewPanel({ syntax }: PreviewPanelProps) {
       mermaid.initialize({
         startOnLoad: false,
         theme: 'default',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
       })
       initialized = true
     }
