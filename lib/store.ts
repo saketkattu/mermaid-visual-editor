@@ -51,9 +51,6 @@ export type CurveStyle =
   | "stepAfter"
   | "stepBefore";
 
-// ─── Diagram type ─────────────────────────────────────────────────────────────
-export type DiagramType = "flowchart" | "sequence" | "mindmap";
-
 // ─── Data types ───────────────────────────────────────────────────────────────
 export interface FlowNodeData extends Record<string, unknown> {
   label: string;
@@ -79,21 +76,6 @@ type Snapshot = {
 const MAX_HISTORY = 50;
 let nodeCounter = 1;
 
-// ─── Default code templates ───────────────────────────────────────────────────
-const SEQUENCE_STARTER = `sequenceDiagram
-  Alice->>Bob: Hello Bob, how are you?
-  Bob-->>Alice: Great, thanks!
-  Alice-)Bob: See you later!`;
-
-const MINDMAP_STARTER = `mindmap
-  root((Central Idea))
-    Topic A
-      Sub-topic 1
-      Sub-topic 2
-    Topic B
-      Sub-topic 3
-    Topic C`;
-
 // ─── Store interface ──────────────────────────────────────────────────────────
 interface FlowState {
   nodes: Node<FlowNodeData>[];
@@ -104,12 +86,6 @@ interface FlowState {
   curveStyle: CurveStyle;
   past: Snapshot[];
   future: Snapshot[];
-
-  // Diagram type switcher
-  diagramType: DiagramType;
-  rawCode: string;
-  setDiagramType: (type: DiagramType) => void;
-  setRawCode: (code: string) => void;
 
   // React Flow change handlers
   onNodesChange: (changes: NodeChange[]) => void;
@@ -215,20 +191,6 @@ export const useFlowStore = create<FlowState>((set, get) => {
     curveStyle: "basis",
     past: [],
     future: [],
-
-    diagramType: "flowchart",
-    rawCode: SEQUENCE_STARTER,
-
-    setDiagramType: (type) => {
-      const { diagramType } = get();
-      if (type === diagramType) return;
-      const updates: Partial<FlowState> = { diagramType: type };
-      if (type === "sequence" && diagramType !== "sequence") updates.rawCode = SEQUENCE_STARTER;
-      if (type === "mindmap" && diagramType !== "mindmap") updates.rawCode = MINDMAP_STARTER;
-      set(updates);
-    },
-
-    setRawCode: (rawCode) => set({ rawCode }),
 
     pushHistory: () => {
       const { nodes, edges, past } = get();
