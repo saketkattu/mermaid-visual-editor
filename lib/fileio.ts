@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
-import type { FlowEdgeData, FlowNodeData } from './store'
-import { serialize, type SerializeOptions } from './serializer'
+import type { FlowEdgeData, FlowNodeData } from './store.ts'
+import { serialize, type SerializeOptions } from './serializer.ts'
 
 /** Trigger a browser file download with given content */
 function download(filename: string, content: string, mimeType: string) {
