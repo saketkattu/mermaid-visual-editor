@@ -122,15 +122,34 @@ export function serialize(
   // ── Graph header ──────────────────────────────────────────────────────────
   lines.push(`flowchart ${direction}`)
 
-  // ── Node declarations ─────────────────────────────────────────────────────
-  for (const node of nodes) {
+  // ── Separate node categories ──────────────────────────────────────────────
+  const subgraphNodes = nodes.filter((n) => n.data.isSubgraph)
+  const standaloneNodes = nodes.filter((n) => !n.data.isSubgraph && !n.parentId)
+  const childNodes = nodes.filter((n) => n.parentId && !n.data.isSubgraph)
+
+  // ── Standalone node declarations ──────────────────────────────────────────
+  for (const node of standaloneNodes) {
     const shape = (node.data.shape ?? 'rectangle') as NodeShape
     const label = node.data.label || node.id
     lines.push(`  ${shapeWrap(node.id, label, shape)}`)
   }
 
+  // ── Subgraph blocks ───────────────────────────────────────────────────────
+  for (const sg of subgraphNodes) {
+    const sgId = sanitizeId(sg.id)
+    const sgLabel = escapeLabel(sg.data.label || sg.id)
+    lines.push(`  subgraph ${sgId} ["${sgLabel}"]`)
+    const children = childNodes.filter((c) => c.parentId === sg.id)
+    for (const child of children) {
+      const shape = (child.data.shape ?? 'rectangle') as NodeShape
+      const label = child.data.label || child.id
+      lines.push(`    ${shapeWrap(child.id, label, shape)}`)
+    }
+    lines.push(`  end`)
+  }
+
   // ── Node styles (only for custom-coloured nodes) ──────────────────────────
-  for (const node of nodes) {
+  for (const node of nodes.filter((n) => !n.data.isSubgraph)) {
     const parts: string[] = []
     if (node.data.fillColor) parts.push(`fill:${node.data.fillColor}`)
     if (node.data.strokeColor) parts.push(`stroke:${node.data.strokeColor}`)

@@ -15,6 +15,7 @@ import {
 import { serialize } from '@/lib/serializer'
 import { applyDagreLayout } from '@/lib/layout'
 import { downloadMmd, saveDiagramJson, loadDiagramJson } from '@/lib/fileio'
+import { ImportModal } from '@/components/ImportModal'
 
 // ─── Shape icon SVGs ──────────────────────────────────────────────────────────
 
@@ -169,13 +170,15 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     updateEdgeType,
     setDirection, setTheme, setLook, setCurveStyle,
     undo, redo, duplicateSelected,
+    addSubgraph, assignToSubgraph,
   } = useFlowStore(useShallow((s) => ({
     direction: s.direction, theme: s.theme, look: s.look, curveStyle: s.curveStyle,
     addNode: s.addNode, setNodes: s.setNodes, loadDiagram: s.loadDiagram,
     updateNodeShape: s.updateNodeShape, updateNodeStyle: s.updateNodeStyle,
     updateEdgeType: s.updateEdgeType,
     setDirection: s.setDirection, setTheme: s.setTheme, setLook: s.setLook, setCurveStyle: s.setCurveStyle,
-    undo: s.undo, redo: s.redo, duplicateSelected: s.duplicateSelected
+    undo: s.undo, redo: s.redo, duplicateSelected: s.duplicateSelected,
+    addSubgraph: s.addSubgraph, assignToSubgraph: s.assignToSubgraph,
   })))
 
   const pastLength = useFlowStore((s) => s.past.length)
@@ -186,11 +189,14 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
   const [activeShape, setActiveShape] = useState<NodeShape>('rectangle')
   const [copied, setCopied] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const selectedNodes = useFlowStore(useShallow((s) => s.nodes.filter((n) => n.selected)))
   const selectedEdges = useFlowStore(useShallow((s) => s.edges.filter((e) => e.selected)))
   const hasNodeSelection = selectedNodes.length > 0
   const hasEdgeSelection = selectedEdges.length > 0
+  const selectableNodes = selectedNodes.filter((n) => !n.data.isSubgraph)
+  const selectedWithParent = selectableNodes.filter((n) => n.parentId)
 
   const displayShape = selectedNodes.length === 1 ? selectedNodes[0].data.shape : activeShape
   const firstEdgeData = hasEdgeSelection ? (selectedEdges[0].data as FlowEdgeData | undefined) : undefined
@@ -256,6 +262,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
   }
 
   return (
+    <>
+    {importOpen && <ImportModal onClose={() => setImportOpen(false)} />}
     <div className="flex justify-between items-start w-full">
 
       {/* ── Left corner controls ─────────────────────────────────────────── */}
@@ -267,8 +275,26 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
           <Btn onClick={handleLoad} title="Load diagram from .json">{loadError ? 'Err' : 'Load'}</Btn>
           <Btn onClick={() => saveDiagramJson(useFlowStore.getState().nodes, useFlowStore.getState().edges)} disabled={nodesLength === 0} title="Save as .json">Save</Btn>
           <Divider />
+          <Btn onClick={() => setImportOpen(true)} title="Import Mermaid syntax onto canvas">Import</Btn>
+          <Divider />
           <Btn onClick={handleDownloadMmd} disabled={nodesLength === 0} title="Download .mmd">.mmd</Btn>
           <Btn onClick={handleExportSvg} disabled={nodesLength === 0} title="Export as SVG">SVG</Btn>
+        </FloatingPanel>
+
+        {/* Subgraph controls */}
+        <FloatingPanel>
+          <Btn onClick={() => addSubgraph()} title="Add a group/subgraph container">⬡ Group</Btn>
+          {selectedWithParent.length > 0 && (
+            <>
+              <Divider />
+              <Btn
+                onClick={() => assignToSubgraph(selectedWithParent.map((n) => n.id), null)}
+                title="Remove selected nodes from their group"
+              >
+                Ungroup
+              </Btn>
+            </>
+          )}
         </FloatingPanel>
 
         {/* Settings/Theme Panel */}
@@ -483,5 +509,6 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
       </FloatingPanel>
 
     </div>
+    </>
   )
 }

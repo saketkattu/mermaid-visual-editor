@@ -1,6 +1,6 @@
 'use client'
 
-import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react'
 import { useCallback, useRef, useState } from 'react'
 import { useFlowStore, type FlowNodeData, type NodeShape } from '@/lib/store'
 
@@ -263,6 +263,26 @@ export function FlowNode({ id, data, selected }: NodeProps) {
     onKeyDown: handleKeyDown,
     inputRef,
     color: textColor,
+  }
+
+  // ── Subgraph container ─────────────────────────────────────────────────────
+  if (nodeData.isSubgraph) {
+    return (
+      <div
+        className="relative w-full h-full rounded-xl cursor-pointer"
+        style={{
+          border: `2px dashed ${strokeColor}`,
+          backgroundColor: nodeData.fillColor ? nodeData.fillColor : 'rgba(59,130,246,0.04)',
+        }}
+        onDoubleClick={handleDoubleClick}
+      >
+        <NodeResizer minWidth={200} minHeight={120} isVisible={!!selected} />
+        <div className={`absolute top-2 left-3 text-xs font-semibold text-gray-500 ${editing ? '' : 'select-none pointer-events-none'}`}>
+          <NodeLabel {...labelProps} color={textColor} />
+        </div>
+        <NodeHandles />
+      </div>
+    )
   }
 
   // ── SVG-backed shapes ──────────────────────────────────────────────────────

@@ -7,11 +7,12 @@ import {
   MiniMap,
   BackgroundVariant,
   useReactFlow,
+  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useEffect, type MouseEvent } from 'react'
+import { useCallback, useEffect, type MouseEvent } from 'react'
 
-import { useFlowStore } from '@/lib/store'
+import { useFlowStore, type FlowNodeData } from '@/lib/store'
 import { FlowNode } from './NodeTypes/FlowNode'
 import { FlowEdge } from './EdgeTypes/FlowEdge'
 
@@ -24,7 +25,7 @@ function CanvasInner() {
     onNodesChange, onEdgesChange, onConnect,
     addNode, addNodeAtPosition,
     undo, redo, duplicateSelected,
-    pushHistory,
+    pushHistory, assignToSubgraph,
   } = useFlowStore()
   const { screenToFlowPosition } = useReactFlow()
 
@@ -78,10 +79,66 @@ function CanvasInner() {
     addNodeAtPosition(position)
   }
 
-  // ── Push history after drag ends (so undo restores drag positions) ─────────
-  const handleNodeDragStop = () => {
-    pushHistory()
-  }
+  // ── Push history after drag ends; auto-assign/unassign group membership ─────
+  const handleNodeDragStop = useCallback(
+    (_event: MouseEvent, draggedNode: Node<FlowNodeData>) => {
+      pushHistory()
+      const allNodes = useFlowStore.getState().nodes
+
+      // Group dragged onto free nodes — auto-assign nodes now inside it
+      if (draggedNode.data.isSubgraph) {
+        const sgW = typeof draggedNode.style?.width === 'number' ? draggedNode.style.width : 320
+        const sgH = typeof draggedNode.style?.height === 'number' ? draggedNode.style.height : 220
+        const freeNodes = allNodes.filter((n) => !n.data.isSubgraph && !n.parentId)
+        const toAssign = freeNodes.filter((n) => {
+          const nw = n.measured?.width ?? 150
+          const nh = n.measured?.height ?? 60
+          const cx = n.position.x + nw / 2
+          const cy = n.position.y + nh / 2
+          return (
+            cx >= draggedNode.position.x && cx <= draggedNode.position.x + sgW &&
+            cy >= draggedNode.position.y && cy <= draggedNode.position.y + sgH
+          )
+        })
+        if (toAssign.length > 0) assignToSubgraph(toAssign.map((n) => n.id), draggedNode.id)
+        return
+      }
+
+      const w = draggedNode.measured?.width ?? 150
+      const h = draggedNode.measured?.height ?? 60
+
+      // Node already in a group — check if it was dragged outside
+      if (draggedNode.parentId) {
+        const parent = allNodes.find((n) => n.id === draggedNode.parentId)
+        if (parent) {
+          const sgW = typeof parent.style?.width === 'number' ? parent.style.width : 320
+          const sgH = typeof parent.style?.height === 'number' ? parent.style.height : 220
+          const cx = draggedNode.position.x + w / 2
+          const cy = draggedNode.position.y + h / 2
+          if (cx < 0 || cx > sgW || cy < 0 || cy > sgH) {
+            assignToSubgraph([draggedNode.id], null)
+          }
+        }
+        return
+      }
+
+      // Free node — check if dropped inside a group
+      const subgraphs = allNodes.filter((n) => n.data.isSubgraph)
+      if (subgraphs.length === 0) return
+      const cx = draggedNode.position.x + w / 2
+      const cy = draggedNode.position.y + h / 2
+      for (const sg of subgraphs) {
+        const sgW = typeof sg.style?.width === 'number' ? sg.style.width : 320
+        const sgH = typeof sg.style?.height === 'number' ? sg.style.height : 220
+        if (cx >= sg.position.x && cx <= sg.position.x + sgW &&
+            cy >= sg.position.y && cy <= sg.position.y + sgH) {
+          assignToSubgraph([draggedNode.id], sg.id)
+          return
+        }
+      }
+    },
+    [pushHistory, assignToSubgraph]
+  )
 
   return (
     <div className="w-full h-full relative" onDoubleClick={handleDoubleClick}>

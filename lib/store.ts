@@ -58,6 +58,7 @@ export interface FlowNodeData extends Record<string, unknown> {
   fillColor?: string;
   strokeColor?: string;
   textColor?: string;
+  isSubgraph?: boolean;
 }
 
 export interface FlowEdgeData extends Record<string, unknown> {
@@ -110,6 +111,15 @@ interface FlowState {
     nodes: Node<FlowNodeData>[],
     edges: Edge<FlowEdgeData>[],
   ) => void;
+  importDiagram: (
+    nodes: Node<FlowNodeData>[],
+    edges: Edge<FlowEdgeData>[],
+    settings: { direction: Direction; theme: Theme; look: Look; curveStyle: CurveStyle },
+  ) => void;
+
+  // Subgraph operations
+  addSubgraph: (title?: string) => void;
+  assignToSubgraph: (nodeIds: string[], subgraphId: string | null) => void;
 
   // Edge operations
   updateEdgeLabel: (id: string, label: string) => void;
@@ -330,6 +340,65 @@ export const useFlowStore = create<FlowState>((set, get) => {
       set({ nodes: stampedNodes, edges: stampedEdges });
     }),
 
+    importDiagram: withHistory((nodes, edges, settings) => {
+      const stampedNodes = nodes.map((n) => ({ ...n, type: "flowNode" }));
+      const stampedEdges = edges.map((e) => ({
+        ...e,
+        type: "flowEdge",
+      })) as Edge<FlowEdgeData>[];
+      // Advance nodeCounter to avoid ID collisions with imported nodes
+      const maxId = stampedNodes.reduce((max, n) => {
+        const m = n.id.match(/(\d+)$/)
+        return m ? Math.max(max, parseInt(m[1], 10)) : max
+      }, 0)
+      if (maxId >= nodeCounter) nodeCounter = maxId + 1
+      set({
+        nodes: stampedNodes,
+        edges: stampedEdges,
+        direction: settings.direction,
+        theme: settings.theme,
+        look: settings.look,
+        curveStyle: settings.curveStyle,
+      });
+    }),
+
+    addSubgraph: withHistory((title = "Group") => {
+      const id = `sg_${nodeCounter++}`;
+      const offset = (nodeCounter * 30) % 200;
+      const newNode: Node<FlowNodeData> = {
+        id,
+        type: "flowNode",
+        position: { x: 200 + offset, y: 150 + offset },
+        data: { label: title, shape: "rectangle", isSubgraph: true },
+        style: { width: 320, height: 220 },
+        zIndex: -1,
+      };
+      set({ nodes: [...get().nodes, newNode] });
+    }),
+
+    assignToSubgraph: withHistory((nodeIds, subgraphId) => {
+      const { nodes } = get();
+      set({
+        nodes: nodes.map((n) => {
+          if (!nodeIds.includes(n.id)) return n;
+          if (subgraphId === null) {
+            // Remove from subgraph: restore absolute position
+            const parent = n.parentId ? nodes.find((p) => p.id === n.parentId) : null;
+            const absPos = parent
+              ? { x: parent.position.x + n.position.x, y: parent.position.y + n.position.y }
+              : n.position;
+            return { ...n, parentId: undefined, extent: undefined, position: absPos };
+          }
+          // Assign to subgraph: convert to relative position
+          const parent = nodes.find((p) => p.id === subgraphId);
+          const relPos = parent
+            ? { x: n.position.x - parent.position.x, y: n.position.y - parent.position.y }
+            : n.position;
+          return { ...n, parentId: subgraphId, position: relPos };
+        }),
+      });
+    }),
+
     setDirection: (direction) => set({ direction }),
     setTheme: (theme) => set({ theme }),
     setLook: (look) => set({ look }),
@@ -340,27 +409,45 @@ export const useFlowStore = create<FlowState>((set, get) => {
       const selectedNodes = nodes.filter((n) => n.selected);
       if (selectedNodes.length === 0) return;
       const idMap = new Map<string, string>();
+
+      // Duplicate the selected nodes themselves
       const newNodes = selectedNodes.map((n) => {
         const newId = `node_${nodeCounter++}`;
         idMap.set(n.id, newId);
+        const label = n.data.isSubgraph ? `Copy of ${n.data.label}` : n.data.label;
         return {
           ...n,
           id: newId,
+          data: { ...n.data, label },
           position: { x: n.position.x + 30, y: n.position.y + 30 },
           selected: true,
         };
       });
-      const selectedIds = new Set(selectedNodes.map((n) => n.id));
+
+      // For each duplicated subgraph, also duplicate its children
+      const childNodes: Node<FlowNodeData>[] = [];
+      for (const n of selectedNodes) {
+        if (!n.data.isSubgraph) continue;
+        const newParentId = idMap.get(n.id)!;
+        for (const child of nodes.filter((c) => c.parentId === n.id)) {
+          const newChildId = `node_${nodeCounter++}`;
+          idMap.set(child.id, newChildId);
+          childNodes.push({ ...child, id: newChildId, parentId: newParentId, selected: true });
+        }
+      }
+
+      // Duplicate edges where both endpoints were duplicated
       const newEdges = edges
-        .filter((e) => selectedIds.has(e.source) && selectedIds.has(e.target))
+        .filter((e) => idMap.has(e.source) && idMap.has(e.target))
         .map((e) => ({
           ...e,
           id: `edge_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           source: idMap.get(e.source)!,
           target: idMap.get(e.target)!,
         }));
+
       set({
-        nodes: [...nodes.map((n) => ({ ...n, selected: false })), ...newNodes],
+        nodes: [...nodes.map((n) => ({ ...n, selected: false })), ...newNodes, ...childNodes],
         edges: [...edges, ...newEdges],
       });
     }),
