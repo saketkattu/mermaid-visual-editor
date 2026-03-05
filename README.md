@@ -4,19 +4,13 @@ A visual drag-and-drop editor for [Mermaid.js](https://mermaid.js.org) flowchart
 
 No account. No cloud. Runs locally.
 
-**[→ Try the live demo](https://mermaid-visual-editor-delta.vercel.app/)**
+**[Try the live demo](https://mermaid-visual-editor-delta.vercel.app/)**
 
 ![Mermaid Visual Editor screenshot](docs/screenshot.png)
 
----
+Mermaid Visual Editor lets you draw flowcharts by dragging nodes and connecting edges on an infinite canvas. Mermaid syntax is generated automatically — you never hand-type it. Built with Next.js, React Flow, Zustand, and Mermaid.js.
 
-## Why
-
-Writing Mermaid syntax by hand works fine for small diagrams. As diagrams grow, it becomes cognitively taxing — syntax errors, layout frustration, editing fatigue. This tool lets you **draw first, export syntax** rather than the other way around.
-
----
-
-## Quick Start
+### Quick Start
 
 ```bash
 git clone https://github.com/saketkattu/mermaid-visual-editor.git
@@ -31,12 +25,66 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Features
+## Why I Built This & Validation
+
+### The Problem
+
+Writing Mermaid syntax by hand works fine for small diagrams. As diagrams grow, it becomes cognitively taxing — syntax errors, layout frustration, editing fatigue. Users shift from *designing systems* to *debugging text*.
+
+The core tension: **human visual thinking vs. text-based diagram construction.**
+
+### Who Feels This Pain
+
+**PKMS Power Users** — rely on plain-text workflows inside tools like Obsidian to maintain portable, future-proof knowledge systems. They tolerate syntax complexity until diagrams exceed a manageable threshold, at which point editing becomes disproportionately effortful.
+
+**Technical Writers & Educators** — use Mermaid to communicate processes and flows in documentation. Syntax introduces friction that competes with their primary job: explaining ideas.
+
+**System Architects & Developers** — value diagrams as structured, version-controlled artifacts. They experience diminishing returns when diagrams become visually complex but syntactically dense.
+
+### Jobs-to-be-Done
+
+- **When modeling complex systems**, I want to express relationships visually without fighting syntax, **so I can focus on thinking rather than formatting.**
+- **When refining diagrams**, I want changes to feel lightweight and intuitive, **so I can iterate rapidly without cognitive fatigue.**
+- **When storing diagrams in my knowledge workflows**, I want them to remain portable and future-proof, **so I avoid lock-in.**
+
+### The Friction Matrix
+
+| Current Approach | Strength | Breaking Point |
+|-----------------|----------|----------------|
+| **Manual syntax** | Maximum portability and precision | Syntax fatigue, high error frequency, cognitive overload as diagrams scale |
+| **Mermaid Live Editor** | Official, free, syntax-complete | Context switching, no bi-directional workflow with local files |
+| **Excalidraw / Whiteboards** | Highly intuitive visual manipulation | Loss of diagram-as-code benefits, weak portability |
+| **AI-assisted generation** | Fast initial creation | Syntax errors, hallucinations, manual cleanup burden |
+
+### Market Signals
+
+Mermaid.js has substantial ecosystem penetration:
+
+- **86,300+ GitHub Stars**
+- **~2.8M Weekly NPM Downloads**
+- **~350,000+ Mermaid-related Plugin Downloads** (Obsidian ecosystem)
+- Estimated friction-affected users: **~2.5M–3M users**
+
+**What users say:**
+
+> *"Creating and editing diagrams visually is much more intuitive."*
+>
+> *"Syntax gets cumbersome real fast for larger mind maps."*
+>
+> *"Mermaid chooses poor layouts… lines are inconsistent."*
+>
+> *"Been waiting for something like this since forever."*
+
+---
+
+## Solution + Features
+
+Mermaid Visual Editor takes a **visual-first** approach: draw first, export syntax. The canvas state is the source of truth — Mermaid syntax is always derived, never hand-typed.
 
 ### Drawing
 - **Add nodes** — click `+ Add Node`, press `N`, or double-click the canvas
 - **Connect nodes** — drag from the handle at the top/bottom/left/right of any node to another node
-- **14 node shapes** — Full suite including Rectangle, Rounded, Stadium, Diamond, Circle, Hexagon, Cylinder, and more
+- **14 node shapes** — Rectangle, Rounded, Stadium, Diamond, Circle, Hexagon, Cylinder, and more
 - **Rename** — double-click any node or edge label to edit inline
 
 ### Editing
@@ -45,7 +93,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Edge customization** — change line style (solid, dashed, thick) and arrow type
 - **Delete** — select nodes/edges and press `Backspace` or `Delete`
 - **Duplicate** — duplicate selected nodes and their edges by pressing `Ctrl+D`
-- **Auto Layout** — click `⬡ Auto Layout` to arrange nodes top-to-bottom (powered by Dagre)
+- **Auto Layout** — arrange nodes top-to-bottom powered by Dagre
 - **Undo/Redo** — full history stack (`Ctrl+Z` / `Ctrl+Shift+Z`)
 
 ### Diagram Settings
@@ -56,16 +104,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Export & Save
 - **Copy Syntax** — copies valid Mermaid `graph` syntax to clipboard
-- **↓ .mmd** — downloads the diagram as a `.mmd` file
-- **↓ .svg** — downloads the live rendered diagram as an `.svg` file
+- **Download .mmd** — downloads the diagram as a `.mmd` file
+- **Download .svg** — downloads the live rendered diagram as an `.svg` file
 - **Save / Load** — save and reload the canvas as a `.json` file
 
 ### Preview
 - **Show Preview** — live Mermaid.js render in a floating panel
 
----
-
-## Keyboard Shortcuts
+### Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -80,10 +126,55 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Roadmap
 
-- [ ] Import Mermaid syntax → canvas
-- [ ] More diagram types (sequence, mindmap)
+### Near-term
+- [ ] Import Mermaid syntax to canvas
 - [ ] Subgraph support
+- [ ] Sequence diagram support
+- [ ] Mindmap support
+
+### Medium-term
 - [ ] Obsidian plugin
+- [ ] Class diagram support
+- [ ] ER diagram support
+- [ ] State diagram support
+- [ ] Dark mode for the editor UI
+
+### Long-term
+- [ ] Real-time collaboration
+- [ ] AI-assisted diagram generation
+- [ ] VS Code extension
+- [ ] Two-way code-canvas sync
+
+---
+
+## Tech Stack & Architecture
+
+| Layer | Choice |
+|-------|--------|
+| Framework | Next.js (App Router) |
+| Visual Canvas | React Flow (XY Flow) |
+| Mermaid Render | mermaid.js |
+| State | Zustand |
+| Styling | Tailwind CSS |
+| Language | TypeScript |
+| Layout | Dagre |
+| Package Manager | pnpm |
+
+### Architecture
+
+```
+User drags nodes/edges
+       |
+  Zustand Store { nodes[], edges[] }
+       |
+  Mermaid Serializer (lib/serializer.ts)
+       |
+  Mermaid syntax string
+       |
+  Preview panel + Export (.mmd / clipboard / .svg)
+```
+
+The canvas state is canonical. Mermaid syntax is always derived — never parsed back in.
 
 ---
 
@@ -101,4 +192,4 @@ pnpm lint    # lint
 
 ## License
 
-MIT © 2025
+MIT
