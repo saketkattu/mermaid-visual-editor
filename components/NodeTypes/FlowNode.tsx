@@ -206,6 +206,7 @@ function NodeLabel({
         onKeyDown={onKeyDown}
         className={`bg-transparent border-none outline-none text-center text-sm w-full ${rotClass}`}
         autoFocus
+        aria-label="Node label"
       />
     )
   }

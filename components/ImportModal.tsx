@@ -73,7 +73,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label="Close"
           >
             ✕
@@ -90,6 +90,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
             placeholder={`flowchart TD\n  A["Start"] --> B{"Decision?"}\n  B --> |"Yes"| C["Do it"]\n  B --> |"No"| D["Skip"]`}
             spellCheck={false}
             rows={14}
+            aria-label="Mermaid Syntax"
           />
           <div className="text-xs min-h-[16px]">{statusText()}</div>
         </div>
@@ -98,14 +99,14 @@ export function ImportModal({ onClose }: ImportModalProps) {
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-gray-100 bg-gray-50/60 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-4 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Cancel
           </button>
           <button
             onClick={handleImport}
             disabled={!canImport}
-            className="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Import to Canvas
           </button>
