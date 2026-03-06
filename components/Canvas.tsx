@@ -107,7 +107,7 @@ function CanvasInner() {
       const w = draggedNode.measured?.width ?? 150
       const h = draggedNode.measured?.height ?? 60
 
-      // Node already in a group — check if it was dragged outside
+      // Node already in a group — snap back if dragged outside (cannot move out)
       if (draggedNode.parentId) {
         const parent = allNodes.find((n) => n.id === draggedNode.parentId)
         if (parent) {
@@ -116,13 +116,21 @@ function CanvasInner() {
           const cx = draggedNode.position.x + w / 2
           const cy = draggedNode.position.y + h / 2
           if (cx < 0 || cx > sgW || cy < 0 || cy > sgH) {
-            assignToSubgraph([draggedNode.id], null)
+            // Snap back inside parent bounds instead of ungrouping
+            const clampedX = Math.max(0, Math.min(draggedNode.position.x, sgW - w))
+            const clampedY = Math.max(0, Math.min(draggedNode.position.y, sgH - h))
+            useFlowStore.setState((state) => ({
+              nodes: state.nodes.map((n) =>
+                n.id === draggedNode.id ? { ...n, position: { x: clampedX, y: clampedY } } : n
+              ),
+            }))
           }
         }
         return
       }
 
-      // Free node — check if dropped inside a group
+      // Free node — check if dropped inside a group (groups cannot be nested)
+      if (draggedNode.data.isSubgraph) return
       const subgraphs = allNodes.filter((n) => n.data.isSubgraph)
       if (subgraphs.length === 0) return
       const cx = draggedNode.position.x + w / 2

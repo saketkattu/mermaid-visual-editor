@@ -170,7 +170,7 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     updateEdgeType,
     setDirection, setTheme, setLook, setCurveStyle,
     undo, redo, duplicateSelected,
-    addSubgraph, assignToSubgraph,
+    addSubgraph,
   } = useFlowStore(useShallow((s) => ({
     direction: s.direction, theme: s.theme, look: s.look, curveStyle: s.curveStyle,
     addNode: s.addNode, setNodes: s.setNodes, loadDiagram: s.loadDiagram,
@@ -178,9 +178,8 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     updateEdgeType: s.updateEdgeType,
     setDirection: s.setDirection, setTheme: s.setTheme, setLook: s.setLook, setCurveStyle: s.setCurveStyle,
     undo: s.undo, redo: s.redo, duplicateSelected: s.duplicateSelected,
-    addSubgraph: s.addSubgraph, assignToSubgraph: s.assignToSubgraph,
+    addSubgraph: s.addSubgraph,
   })))
-
   const pastLength = useFlowStore((s) => s.past.length)
   const futureLength = useFlowStore((s) => s.future.length)
   const nodesLength = useFlowStore((s) => s.nodes.length)
@@ -195,8 +194,6 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
   const selectedEdges = useFlowStore(useShallow((s) => s.edges.filter((e) => e.selected)))
   const hasNodeSelection = selectedNodes.length > 0
   const hasEdgeSelection = selectedEdges.length > 0
-  const selectableNodes = selectedNodes.filter((n) => !n.data.isSubgraph)
-  const selectedWithParent = selectableNodes.filter((n) => n.parentId)
 
   const displayShape = selectedNodes.length === 1 ? selectedNodes[0].data.shape : activeShape
   const firstEdgeData = hasEdgeSelection ? (selectedEdges[0].data as FlowEdgeData | undefined) : undefined
@@ -284,17 +281,6 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
         {/* Subgraph controls */}
         <FloatingPanel>
           <Btn onClick={() => addSubgraph()} title="Add a group/subgraph container">⬡ Group</Btn>
-          {selectedWithParent.length > 0 && (
-            <>
-              <Divider />
-              <Btn
-                onClick={() => assignToSubgraph(selectedWithParent.map((n) => n.id), null)}
-                title="Remove selected nodes from their group"
-              >
-                Ungroup
-              </Btn>
-            </>
-          )}
         </FloatingPanel>
 
         {/* Settings/Theme Panel */}
