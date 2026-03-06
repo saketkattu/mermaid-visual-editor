@@ -123,6 +123,27 @@ function SvgAsymmetric({
   )
 }
 
+function SvgDiamond({
+  fill,
+  stroke,
+  sw,
+}: {
+  fill: string
+  stroke: string
+  sw: number
+}) {
+  // Vertices at cardinal midpoints: top=(100,2), right=(198,50), bottom=(100,98), left=(2,50)
+  // These align exactly with Position.Top/Right/Bottom/Left handles placed at the rect's edge centers
+  return (
+    <polygon
+      points="100,2 198,50 100,98 2,50"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={sw}
+    />
+  )
+}
+
 function SvgCylinder({
   fill,
   stroke,
@@ -148,6 +169,7 @@ function SvgCylinder({
 type SvgShapeRenderer = (props: { fill: string; stroke: string; sw: number }) => React.ReactNode
 
 const SVG_RENDERERS: Partial<Record<NodeShape, SvgShapeRenderer>> = {
+  diamond: SvgDiamond,
   hexagon: SvgHexagon,
   parallelogram: SvgParallelogram,
   'parallelogram-alt': SvgParallelogramAlt,
@@ -180,7 +202,6 @@ interface LabelProps {
   onCommit: () => void
   onKeyDown: (e: React.KeyboardEvent) => void
   inputRef: React.RefObject<HTMLInputElement | null>
-  rotate?: boolean
   color?: string
 }
 
@@ -192,10 +213,8 @@ function NodeLabel({
   onCommit,
   onKeyDown,
   inputRef,
-  rotate,
   color,
 }: LabelProps) {
-  const rotClass = rotate ? '-rotate-45' : ''
   if (editing) {
     return (
       <input
@@ -204,14 +223,14 @@ function NodeLabel({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={onCommit}
         onKeyDown={onKeyDown}
-        className={`bg-transparent border-none outline-none text-center text-sm w-full ${rotClass}`}
+        className="bg-transparent border-none outline-none text-center text-sm w-full"
         autoFocus
       />
     )
   }
   return (
     <span
-      className={`text-center break-words text-sm font-medium leading-snug select-none ${rotClass}`}
+      className="text-center break-words text-sm font-medium leading-snug select-none"
       style={{ color: color || '#1f2937' }}
     >
       {value}
@@ -269,12 +288,14 @@ export function FlowNode({ id, data, selected }: NodeProps) {
   if (IS_SVG_SHAPE.has(shape)) {
     const Renderer = SVG_RENDERERS[shape]!
     const isCylinder = shape === 'cylinder'
+    const isDiamond = shape === 'diamond'
+    const minH = isCylinder ? 80 : isDiamond ? 80 : 54
     return (
       <div
         className="relative cursor-pointer select-none"
         style={{
-          minWidth: 130,
-          minHeight: isCylinder ? 80 : 54,
+          minWidth: isDiamond ? 120 : 130,
+          minHeight: minH,
         }}
         onDoubleClick={handleDoubleClick}
       >
@@ -286,32 +307,11 @@ export function FlowNode({ id, data, selected }: NodeProps) {
           <Renderer fill={fillColor} stroke={strokeColor} sw={strokeWidth} />
         </svg>
         <div
-          className="relative z-10 flex items-center justify-center w-full h-full px-8 py-3"
-          style={{ minHeight: isCylinder ? 80 : 54 }}
+          className={`relative z-10 flex items-center justify-center w-full h-full ${isDiamond ? 'px-12 py-4' : 'px-8 py-3'}`}
+          style={{ minHeight: minH }}
         >
           <NodeLabel {...labelProps} />
         </div>
-        <NodeHandles />
-      </div>
-    )
-  }
-
-  // ── Diamond (CSS rotate-45) ────────────────────────────────────────────────
-  if (shape === 'diamond') {
-    return (
-      <div
-        className="relative flex items-center justify-center cursor-pointer select-none"
-        style={{
-          minWidth: 90,
-          minHeight: 90,
-          backgroundColor: fillColor,
-          border: `${strokeWidth}px solid ${strokeColor}`,
-          transform: 'rotate(45deg)',
-          borderRadius: 4,
-        }}
-        onDoubleClick={handleDoubleClick}
-      >
-        <NodeLabel {...labelProps} rotate />
         <NodeHandles />
       </div>
     )
