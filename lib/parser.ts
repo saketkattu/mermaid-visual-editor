@@ -25,133 +25,240 @@ export interface ParseResult {
 }
 
 // ─── Node shape detection ─────────────────────────────────────────────────────
-// Inverts the shapeWrap() function from serializer.ts.
-// Each regex matches the suffix after the node ID.
+// Parses a node suffix like [label], (label), {label}, etc.
+// Supports both quoted ("label") and unquoted (label) forms.
 
 function parseNodeSuffix(suffix: string): { shape: NodeShape; label: string } | null {
   let m: RegExpMatchArray | null
 
-  // double-circle: ((("label")))
-  m = suffix.match(/^\({3}"([^"]*)"\){3}$/)
+  // double-circle: ((("label"))) or (((label)))
+  m = suffix.match(/^\({3}"?([^"()]*)"?\){3}$/)
   if (m) return { shape: 'double-circle', label: m[1] }
 
-  // circle: (("label"))
-  m = suffix.match(/^\({2}"([^"]*)"\){2}$/)
-  if (m) return { shape: 'circle', label: m[1] }
-
-  // stadium: (["label"])
-  m = suffix.match(/^\(\["([^"]*)"\]\)$/)
+  // stadium: (["label"]) or ([label])
+  m = suffix.match(/^\(\["?([^"\]]*)"?\]\)$/)
   if (m) return { shape: 'stadium', label: m[1] }
 
-  // rounded: ("label")
-  m = suffix.match(/^\("([^"]*)"\)$/)
+  // circle: (("label")) or ((label))
+  m = suffix.match(/^\({2}"?([^"()]*)"?\){2}$/)
+  if (m) return { shape: 'circle', label: m[1] }
+
+  // rounded: ("label") or (label)
+  m = suffix.match(/^\("?([^"()]*)"?\)$/)
   if (m) return { shape: 'rounded', label: m[1] }
 
-  // subroutine: [["label"]]
-  m = suffix.match(/^\[\["([^"]*)"\]\]$/)
+  // subroutine: [["label"]] or [[label]]
+  m = suffix.match(/^\[\["?([^"\]]*)"?\]\]$/)
   if (m) return { shape: 'subroutine', label: m[1] }
 
-  // cylinder: [("label")]
-  m = suffix.match(/^\[\("([^"]*)"\)\]$/)
+  // cylinder: [("label")] or [(label)]
+  m = suffix.match(/^\[\("?([^"()]*)"?\)\]$/)
   if (m) return { shape: 'cylinder', label: m[1] }
 
-  // hexagon: {{"label"}}
-  m = suffix.match(/^\{\{"([^"]*)"\}\}$/)
+  // hexagon: {{"label"}} or {{label}}
+  m = suffix.match(/^\{\{"?([^"{}]*)"?\}\}$/)
   if (m) return { shape: 'hexagon', label: m[1] }
 
-  // diamond: {"label"}
-  m = suffix.match(/^\{"([^"]*)"\}$/)
+  // diamond: {"label"} or {label}
+  m = suffix.match(/^\{"?([^"{}]*)"?\}$/)
   if (m) return { shape: 'diamond', label: m[1] }
 
-  // parallelogram: [/"label"/]
-  m = suffix.match(/^\[\/?"([^"]*)"\/?\]$/)
-  if (m && suffix.startsWith('[/"') && suffix.endsWith('/]')) return { shape: 'parallelogram', label: m[1] }
+  // parallelogram: [/"label"/] or [/label/]
+  if (suffix.startsWith('[/"') || suffix.startsWith('[/')) {
+    m = suffix.match(/^\[\/"?([^"]*)"?\/\]$/)
+    if (m) return { shape: 'parallelogram', label: m[1] }
+  }
 
-  // trapezoid: [/"label"\]   (starts /", ends \])
-  if (suffix.startsWith('[/"') && suffix.endsWith('\\]')) {
-    m = suffix.match(/^\[\/"([^"]*)"\\\]$/)
+  // trapezoid: [/"label"\] or [/label\]
+  if (suffix.startsWith('[/') && suffix.endsWith('\\]')) {
+    m = suffix.match(/^\[\/"?([^"]*)"?\\\]$/)
     if (m) return { shape: 'trapezoid', label: m[1] }
   }
 
-  // parallelogram-alt: [\"label"\]  (starts \", ends \])
+  // parallelogram-alt: [\"label"\] or [\label\]
   if (suffix.startsWith('[\\') && suffix.endsWith('\\]')) {
-    m = suffix.match(/^\[\\"([^"]*)"\\\]$/)
+    m = suffix.match(/^\[\\"?([^"]*)"?\\\]$/)
     if (m) return { shape: 'parallelogram-alt', label: m[1] }
   }
 
-  // trapezoid-alt: [\"label"/]  (starts \", ends /])
+  // trapezoid-alt: [\"label"/] or [\label/]
   if (suffix.startsWith('[\\') && suffix.endsWith('/]')) {
-    m = suffix.match(/^\[\\"([^"]*)"\/\]$/)
+    m = suffix.match(/^\[\\"?([^"]*)"?\/\]$/)
     if (m) return { shape: 'trapezoid-alt', label: m[1] }
   }
 
-  // asymmetric: >"label"]
-  m = suffix.match(/^>"([^"]*)"\]$/)
+  // asymmetric: >"label"] or >label]
+  m = suffix.match(/^>"?([^"\]]*)"?\]$/)
   if (m) return { shape: 'asymmetric', label: m[1] }
 
-  // rectangle: ["label"]
-  m = suffix.match(/^\["([^"]*)"\]$/)
+  // rectangle: ["label"] or [label]
+  m = suffix.match(/^\["?([^"\]]*)"?\]$/)
   if (m) return { shape: 'rectangle', label: m[1] }
 
   return null
 }
 
-// ─── Edge connector mapping ───────────────────────────────────────────────────
-// Inverts edgeConnector() from serializer.ts.
+// ─── Extract a node reference from the start of a string ─────────────────────
+// Returns the node ID, its shape/label, and the remaining string after the node.
+// Handles: ID[label], ID(label), ID{label}, ID((label)), ID>label], etc.
+// Also handles bare IDs like: ID
 
-const CONNECTOR_MAP: Record<string, { edgeStyle: EdgeStyle; arrowType: ArrowType }> = {
-  '-->':    { edgeStyle: 'solid',  arrowType: 'arrow' },
-  '---':    { edgeStyle: 'solid',  arrowType: 'none' },
-  '<-->':   { edgeStyle: 'solid',  arrowType: 'bidirectional' },
-  '--o':    { edgeStyle: 'solid',  arrowType: 'circle' },
-  '--x':    { edgeStyle: 'solid',  arrowType: 'cross' },
-  '-.-':    { edgeStyle: 'dashed', arrowType: 'none' },
-  '<-.->':  { edgeStyle: 'dashed', arrowType: 'bidirectional' },
-  '-.-o':   { edgeStyle: 'dashed', arrowType: 'circle' },
-  '-.-x':   { edgeStyle: 'dashed', arrowType: 'cross' },
-  '-.->' :  { edgeStyle: 'dashed', arrowType: 'arrow' },
-  '===':    { edgeStyle: 'thick',  arrowType: 'none' },
-  '<===>':  { edgeStyle: 'thick',  arrowType: 'bidirectional' },
-  '==>':    { edgeStyle: 'thick',  arrowType: 'arrow' },
+interface NodeRef {
+  id: string
+  label: string
+  shape: NodeShape
+  rest: string
 }
 
-// ─── Line classifiers ─────────────────────────────────────────────────────────
+function extractNodeRef(str: string): NodeRef | null {
+  str = str.trim()
 
-interface EdgeParseResult {
-  source: string
-  target: string
-  label?: string
-  edgeStyle: EdgeStyle
-  arrowType: ArrowType
+  // Match the node ID (word characters)
+  const idMatch = str.match(/^(\w+)/)
+  if (!idMatch) return null
+
+  const id = idMatch[1]
+  let after = str.slice(id.length)
+
+  // If there's no shape suffix, it's a bare ID
+  if (!after || /^\s/.test(after[0])) {
+    return { id, label: id, shape: 'rectangle', rest: after }
+  }
+
+  // Try to find the matching closing bracket for the shape
+  const shapeStr = extractBalancedShape(after)
+  if (shapeStr) {
+    const parsed = parseNodeSuffix(shapeStr)
+    if (parsed) {
+      return {
+        id,
+        label: parsed.label,
+        shape: parsed.shape,
+        rest: after.slice(shapeStr.length),
+      }
+    }
+  }
+
+  // If we can't parse the shape, treat as bare ID
+  return { id, label: id, shape: 'rectangle', rest: after }
 }
 
-function tryParseEdge(line: string): EdgeParseResult | null {
-  // With label: src CONNECTOR|"label"| tgt
-  const withLabel = line.match(/^(\w+)\s+([-<>=.ox]+)\|"([^"]*)"\|\s+(\w+)$/)
-  if (withLabel) {
-    const [, src, conn, label, tgt] = withLabel
-    const type = CONNECTOR_MAP[conn]
-    if (type) return { source: src, target: tgt, label, ...type }
+// Extract a balanced bracket expression from the start of a string.
+// Handles nested brackets like (([label])), {label}, etc.
+function extractBalancedShape(str: string): string | null {
+  if (!str) return null
+
+  const open = str[0]
+  let closeChar: string
+  if (open === '[') closeChar = ']'
+  else if (open === '(') closeChar = ')'
+  else if (open === '{') closeChar = '}'
+  else if (open === '>') closeChar = ']'
+  else return null
+
+  // For '>' asymmetric shape, just find the closing ']'
+  if (open === '>') {
+    const closeIdx = str.indexOf(']')
+    if (closeIdx < 0) return null
+    return str.slice(0, closeIdx + 1)
   }
 
-  // Without label: src CONNECTOR tgt
-  const noLabel = line.match(/^(\w+)\s+([-<>=.ox]+)\s+(\w+)$/)
-  if (noLabel) {
-    const [, src, conn, tgt] = noLabel
-    const type = CONNECTOR_MAP[conn]
-    if (type) return { source: src, target: tgt, ...type }
+  const brackets: Record<string, string> = { '[': ']', '(': ')', '{': '}' }
+  const stack: string[] = []
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i]
+    if (ch in brackets) {
+      stack.push(brackets[ch])
+    } else if (ch === closeChar || ch === ']' || ch === ')' || ch === '}') {
+      if (stack.length > 0 && stack[stack.length - 1] === ch) {
+        stack.pop()
+        if (stack.length === 0) {
+          return str.slice(0, i + 1)
+        }
+      } else {
+        return null
+      }
+    }
   }
-
   return null
 }
 
-function tryParseNode(line: string): { id: string; label: string; shape: NodeShape } | null {
-  const m = line.match(/^(\w+)(.+)$/)
-  if (!m) return null
-  const [, id, suffix] = m
-  const result = parseNodeSuffix(suffix.trim())
-  if (!result) return null
-  return { id, ...result }
+// ─── Edge connector matching ─────────────────────────────────────────────────
+
+const CONNECTORS: { pattern: RegExp; edgeStyle: EdgeStyle; arrowType: ArrowType }[] = [
+  // Dashed with arrows (longer patterns first)
+  { pattern: /^<-\.->/, edgeStyle: 'dashed', arrowType: 'bidirectional' },
+  { pattern: /^-\.->/, edgeStyle: 'dashed', arrowType: 'arrow' },
+  { pattern: /^-\.-o/, edgeStyle: 'dashed', arrowType: 'circle' },
+  { pattern: /^-\.-x/, edgeStyle: 'dashed', arrowType: 'cross' },
+  { pattern: /^-\.-/, edgeStyle: 'dashed', arrowType: 'none' },
+  // Thick
+  { pattern: /^<===>/, edgeStyle: 'thick', arrowType: 'bidirectional' },
+  { pattern: /^==>/, edgeStyle: 'thick', arrowType: 'arrow' },
+  { pattern: /^===/, edgeStyle: 'thick', arrowType: 'none' },
+  // Solid
+  { pattern: /^<-->/, edgeStyle: 'solid', arrowType: 'bidirectional' },
+  { pattern: /^-->/, edgeStyle: 'solid', arrowType: 'arrow' },
+  { pattern: /^--o/, edgeStyle: 'solid', arrowType: 'circle' },
+  { pattern: /^--x/, edgeStyle: 'solid', arrowType: 'cross' },
+  { pattern: /^---/, edgeStyle: 'solid', arrowType: 'none' },
+]
+
+interface ConnectorMatch {
+  edgeStyle: EdgeStyle
+  arrowType: ArrowType
+  label?: string
+  rest: string
+}
+
+function matchConnector(str: string): ConnectorMatch | null {
+  str = str.trim()
+
+  // First try: -- label --> pattern (solid arrow with inline label)
+  // Matches: -- text -->, -- text ---, etc.
+  const dashLabelMatch = str.match(/^--\s+(.+?)\s+(-->|---|--o|--x|<-->)(.*)$/)
+  if (dashLabelMatch) {
+    const [, label, conn, rest] = dashLabelMatch
+    for (const c of CONNECTORS) {
+      if (c.pattern.test(conn)) {
+        return { edgeStyle: c.edgeStyle, arrowType: c.arrowType, label, rest }
+      }
+    }
+  }
+
+  // Try: == label ==> pattern (thick with inline label)
+  const thickLabelMatch = str.match(/^==\s+(.+?)\s+(==>|===|<===>)(.*)$/)
+  if (thickLabelMatch) {
+    const [, label, conn, rest] = thickLabelMatch
+    for (const c of CONNECTORS) {
+      if (c.pattern.test(conn)) {
+        return { edgeStyle: c.edgeStyle, arrowType: c.arrowType, label, rest }
+      }
+    }
+  }
+
+  // Try: -. label .-> pattern (dashed with inline label)
+  const dashedLabelMatch = str.match(/^-\.\s+(.+?)\s+\.->(.*)$/)
+  if (dashedLabelMatch) {
+    const [, label, rest] = dashedLabelMatch
+    return { edgeStyle: 'dashed', arrowType: 'arrow', label, rest }
+  }
+
+  // Try connector with |label| or |"label"| suffix
+  for (const c of CONNECTORS) {
+    const m = str.match(c.pattern)
+    if (m) {
+      let rest = str.slice(m[0].length)
+      // Check for |label| or |"label"| after connector
+      const labelMatch = rest.match(/^\|"?([^"|]*)"?\|(.*)$/)
+      if (labelMatch) {
+        return { edgeStyle: c.edgeStyle, arrowType: c.arrowType, label: labelMatch[1], rest: labelMatch[2] }
+      }
+      return { edgeStyle: c.edgeStyle, arrowType: c.arrowType, rest }
+    }
+  }
+
+  return null
 }
 
 // ─── JSON extractor (depth-counted, handles nested objects) ───────────────────
@@ -206,8 +313,20 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
     const pendingStyles = new Map<string, Partial<Pick<FlowNodeData, 'fillColor' | 'strokeColor' | 'textColor'>>>()
     const pendingLinkStyles = new Map<number, string>()
 
+    // Helper to register a node from a NodeRef
+    const registerNode = (ref: NodeRef) => {
+      if (!nodesMap.has(ref.id)) {
+        const node = makeNode(ref.id, ref.label, ref.shape)
+        if (currentSubgraphId) {
+          node.parentId = currentSubgraphId
+          node.extent = 'parent'
+        }
+        nodesMap.set(ref.id, node)
+      }
+    }
+
     for (const line of lines) {
-      // ── Frontmatter %%{ init: {...} }%%
+      // ── Comment lines (%%): skip unless init directive
       if (line.startsWith('%%')) {
         const initIdx = line.indexOf('init:')
         if (initIdx >= 0) {
@@ -240,7 +359,7 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
 
       // ── Subgraph block
       if (line.startsWith('subgraph ')) {
-        const m = line.match(/^subgraph\s+(\w+)(?:\s+\["([^"]*)"\])?/)
+        const m = line.match(/^subgraph\s+(\w+)(?:\s+\["?([^"\]]*)"?\])?/)
         if (m) {
           currentSubgraphId = m[1]
           const label = m[2] ?? m[1]
@@ -286,32 +405,38 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
         continue
       }
 
-      // ── Edge line (try before node, since edges contain connector chars)
-      const edgeData = tryParseEdge(line)
-      if (edgeData) {
+      // ── Parse line as a chain of: NodeRef (connector NodeRef)*
+      // This handles both standalone node declarations and edge lines
+      // including inline node definitions like: A[label] --> B[label] --> C{decision}
+      const firstNode = extractNodeRef(line)
+      if (!firstNode) continue
+
+      registerNode(firstNode)
+
+      let remaining = firstNode.rest
+      let prevNodeId = firstNode.id
+
+      // Try to parse a chain of edges
+      while (remaining.trim()) {
+        const conn = matchConnector(remaining)
+        if (!conn) break
+
+        const targetRef = extractNodeRef(conn.rest)
+        if (!targetRef) break
+
+        registerNode(targetRef)
+
         edges.push({
           id: `edge_${edgeIdx++}`,
-          source: edgeData.source,
-          target: edgeData.target,
+          source: prevNodeId,
+          target: targetRef.id,
           type: 'flowEdge',
-          label: edgeData.label,
-          data: { edgeStyle: edgeData.edgeStyle, arrowType: edgeData.arrowType },
+          label: conn.label,
+          data: { edgeStyle: conn.edgeStyle, arrowType: conn.arrowType },
         })
-        // Ensure referenced nodes exist (implicit node creation)
-        if (!nodesMap.has(edgeData.source)) nodesMap.set(edgeData.source, makeNode(edgeData.source))
-        if (!nodesMap.has(edgeData.target)) nodesMap.set(edgeData.target, makeNode(edgeData.target))
-        continue
-      }
 
-      // ── Node declaration line
-      const nodeData = tryParseNode(line)
-      if (nodeData) {
-        const node = makeNode(nodeData.id, nodeData.label, nodeData.shape)
-        if (currentSubgraphId) {
-          node.parentId = currentSubgraphId
-          node.extent = 'parent'
-        }
-        nodesMap.set(nodeData.id, node)
+        prevNodeId = targetRef.id
+        remaining = targetRef.rest
       }
     }
 
