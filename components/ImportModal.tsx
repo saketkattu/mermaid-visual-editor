@@ -64,7 +64,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-auto"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
