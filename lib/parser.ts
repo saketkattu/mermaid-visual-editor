@@ -366,7 +366,6 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
           nodesMap.set(currentSubgraphId, {
             ...makeNode(currentSubgraphId, label),
             data: { label, shape: 'rectangle', isSubgraph: true },
-            style: { width: 320, height: 220 },
             zIndex: -1,
           })
         }
