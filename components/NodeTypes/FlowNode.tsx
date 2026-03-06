@@ -144,10 +144,31 @@ function SvgCylinder({
   )
 }
 
+function SvgDiamond({
+  fill,
+  stroke,
+  sw,
+}: {
+  fill: string
+  stroke: string
+  sw: number
+}) {
+  // Vertices at cardinal midpoints of 200×100 viewBox — aligns with React Flow handles
+  return (
+    <polygon
+      points="100,2 198,50 100,98 2,50"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={sw}
+    />
+  )
+}
+
 // ─── Shape → SVG renderer map ─────────────────────────────────────────────────
 type SvgShapeRenderer = (props: { fill: string; stroke: string; sw: number }) => React.ReactNode
 
 const SVG_RENDERERS: Partial<Record<NodeShape, SvgShapeRenderer>> = {
+  diamond: SvgDiamond,
   hexagon: SvgHexagon,
   parallelogram: SvgParallelogram,
   'parallelogram-alt': SvgParallelogramAlt,
@@ -180,7 +201,6 @@ interface LabelProps {
   onCommit: () => void
   onKeyDown: (e: React.KeyboardEvent) => void
   inputRef: React.RefObject<HTMLInputElement | null>
-  rotate?: boolean
   color?: string
 }
 
@@ -192,10 +212,8 @@ function NodeLabel({
   onCommit,
   onKeyDown,
   inputRef,
-  rotate,
   color,
 }: LabelProps) {
-  const rotClass = rotate ? '-rotate-45' : ''
   if (editing) {
     return (
       <input
@@ -204,7 +222,7 @@ function NodeLabel({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={onCommit}
         onKeyDown={onKeyDown}
-        className={`bg-transparent border-none outline-none text-center text-sm w-full ${rotClass}`}
+        className="bg-transparent border-none outline-none text-center text-sm w-full"
         autoFocus
         aria-label="Node label"
       />
@@ -212,7 +230,7 @@ function NodeLabel({
   }
   return (
     <span
-      className={`text-center break-words text-sm font-medium leading-snug select-none ${rotClass}`}
+      className="text-center break-words text-sm font-medium leading-snug select-none"
       style={{ color: color || '#1f2937' }}
     >
       {value}
@@ -312,27 +330,6 @@ export function FlowNode({ id, data, selected }: NodeProps) {
         >
           <NodeLabel {...labelProps} />
         </div>
-        <NodeHandles />
-      </div>
-    )
-  }
-
-  // ── Diamond (CSS rotate-45) ────────────────────────────────────────────────
-  if (shape === 'diamond') {
-    return (
-      <div
-        className="relative flex items-center justify-center cursor-pointer select-none"
-        style={{
-          minWidth: 90,
-          minHeight: 90,
-          backgroundColor: fillColor,
-          border: `${strokeWidth}px solid ${strokeColor}`,
-          transform: 'rotate(45deg)',
-          borderRadius: 4,
-        }}
-        onDoubleClick={handleDoubleClick}
-      >
-        <NodeLabel {...labelProps} rotate />
         <NodeHandles />
       </div>
     )
