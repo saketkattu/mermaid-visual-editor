@@ -21,42 +21,30 @@ function escapeLabel(label: string): string {
   return label.replace(/"/g, "'")
 }
 
+const SHAPE_TEMPLATES: Record<NodeShape, [string, string]> = {
+  'rounded': ['("', '")'],
+  'stadium': ['(["', '"])'],
+  'subroutine': ['[["', '"]]'],
+  'cylinder': ['[("', '")]'],
+  'circle': ['(("', '"))'],
+  'double-circle': ['((("', '")))'],
+  'diamond': ['{"', '"}'],
+  'hexagon': ['{{"', '"}}'],
+  'parallelogram': ['[/"', '"/]'],
+  'parallelogram-alt': ['[\\"', '"\\]'],
+  'trapezoid': ['[/"', '"\\]'],
+  'trapezoid-alt': ['[\\"', '"/]'],
+  'asymmetric': ['>"', '"]'],
+  'rectangle': ['["', '"]'],
+}
+
 /** Wrap a label in the correct Mermaid shape syntax for all 14 shapes */
 function shapeWrap(id: string, label: string, shape: NodeShape): string {
   const sid = sanitizeId(id)
   const lbl = escapeLabel(label)
-  switch (shape) {
-    case 'rounded':
-      return `${sid}("${lbl}")`
-    case 'stadium':
-      return `${sid}(["${lbl}"])`
-    case 'subroutine':
-      return `${sid}[["${lbl}"]]`
-    case 'cylinder':
-      return `${sid}[("${lbl}")]`
-    case 'circle':
-      return `${sid}(("${lbl}"))`
-    case 'double-circle':
-      return `${sid}((("${lbl}")))`
-    case 'diamond':
-      return `${sid}{"${lbl}"}`
-    case 'hexagon':
-      return `${sid}{{"${lbl}"}}`
-    case 'parallelogram':
-      return `${sid}[/"${lbl}"/]`
-    case 'parallelogram-alt':
-      // Backslash is the Mermaid shape delimiter → use String.raw to avoid escaping issues
-      return String.raw`${sid}[\"${lbl}"\]`
-    case 'trapezoid':
-      return String.raw`${sid}[/"${lbl}"\]`
-    case 'trapezoid-alt':
-      return String.raw`${sid}[\"${lbl}"/]`
-    case 'asymmetric':
-      return `${sid}>"${lbl}"]`
-    case 'rectangle':
-    default:
-      return `${sid}["${lbl}"]`
-  }
+  const [open, close] = SHAPE_TEMPLATES[shape] ?? SHAPE_TEMPLATES['rectangle']
+
+  return `${sid}${open}${lbl}${close}`
 }
 
 /** Build the Mermaid edge connector string based on style and arrow type */
