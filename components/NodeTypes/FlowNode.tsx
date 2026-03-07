@@ -182,13 +182,46 @@ const IS_SVG_SHAPE = new Set<NodeShape>(Object.keys(SVG_RENDERERS) as NodeShape[
 
 // ─── Four-directional handles (shown on all shapes) ──────────────────────────
 function NodeHandles() {
-  const s = { zIndex: 10 } as const
+  const base = {
+    zIndex: 30,
+    pointerEvents: 'all',
+  } as const
+
+  const topStyle = { ...base, top: 2 }
+  const bottomStyle = { ...base, bottom: 2 }
+  const leftStyle = { ...base, left: 2 }
+  const rightStyle = { ...base, right: 2 }
+
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
-      <Handle type="target" position={Position.Left} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
-      <Handle type="source" position={Position.Bottom} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
-      <Handle type="source" position={Position.Right} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
+      <Handle
+        id="top-target"
+        type="target"
+        position={Position.Top}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={topStyle}
+      />
+      <Handle
+        id="left-target"
+        type="target"
+        position={Position.Left}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={leftStyle}
+      />
+      <Handle
+        id="bottom-source"
+        type="source"
+        position={Position.Bottom}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={bottomStyle}
+      />
+      <Handle
+        id="right-source"
+        type="source"
+        position={Position.Right}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={rightStyle}
+      />
     </>
   )
 }
