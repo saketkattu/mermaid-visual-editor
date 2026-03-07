@@ -13,6 +13,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+      <head><script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script></head>
       <body className="antialiased" suppressHydrationWarning>{children}</body>
     </html>
   )

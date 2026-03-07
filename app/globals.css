@@ -1,6 +1,32 @@
 @import "tailwindcss";
 
+:root {
+  --neu-bg: #E0E5EC;
+  /* Raised element (default) */
+  --neu-shadow-raised:
+    6px 6px 14px rgba(163, 177, 198, 0.6),
+    -6px -6px 14px rgba(255, 255, 255, 0.8);
+  /* Pressed/active element */
+  --neu-shadow-inset:
+    inset 4px 4px 10px rgba(163, 177, 198, 0.6),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.8);
+  /* Concave container (code block, input) */
+  --neu-shadow-concave:
+    inset 6px 6px 12px rgba(163, 177, 198, 0.5),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+  /* Subtle raised (panels, cards) */
+  --neu-shadow-soft:
+    4px 4px 10px rgba(163, 177, 198, 0.5),
+    -4px -4px 10px rgba(255, 255, 255, 0.7);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--neu-bg);
 }
+
+.neu-raised { box-shadow: var(--neu-shadow-raised); }
+.neu-inset  { box-shadow: var(--neu-shadow-inset); }
+.neu-concave{ box-shadow: var(--neu-shadow-concave); }
+.neu-soft   { box-shadow: var(--neu-shadow-soft); }

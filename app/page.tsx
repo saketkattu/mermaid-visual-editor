@@ -3,34 +3,74 @@
 import { useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { Canvas } from '@/components/Canvas'
-import { Toolbar } from '@/components/Toolbar'
-import { PreviewPanel } from '@/components/PreviewPanel'
+import { TopToolbar } from '@/components/TopToolbar'
+import { SearchBar } from '@/components/SearchBar'
+import { ZoomControls } from '@/components/ZoomControls'
+import { InspectorPanel } from '@/components/Inspector/InspectorPanel'
+import { CommandPalette } from '@/components/CommandPalette'
 import { useFlowStore } from '@/lib/store'
 import { serialize } from '@/lib/serializer'
 
 function EditorContent() {
-  const [previewOpen, setPreviewOpen] = useState(false)
+  const [inspectorOpen, setInspectorOpen] = useState(true)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
   const { nodes, edges, direction, theme, look, curveStyle } = useFlowStore()
   const syntax = serialize(nodes, edges, { direction, theme, look, curveStyle })
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
-      <div className="absolute inset-0 z-0">
-        <Canvas />
+    <div
+      style={{
+        position: 'relative',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+        display: 'flex',
+        background: 'var(--neu-bg)',
+      }}
+    >
+      {/* Canvas zone */}
+      <div style={{ position: 'relative', flex: 1, background: 'var(--neu-bg)' }}>
+        <Canvas onOpenPalette={() => setPaletteOpen(true)} />
+
+        {/* Top overlay — toolbar + searchbar */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            zIndex: 20,
+            pointerEvents: 'none',
+          }}
+        >
+          <TopToolbar
+            inspectorOpen={inspectorOpen}
+            onToggleInspector={() => setInspectorOpen((v) => !v)}
+            onOpenPalette={() => setPaletteOpen(true)}
+            syntax={syntax}
+          />
+          <SearchBar onOpen={() => setPaletteOpen(true)} />
+        </div>
+
+        {/* Zoom controls */}
+        <ZoomControls />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-10 flex flex-col p-4">
-        <Toolbar
-          onTogglePreview={() => setPreviewOpen((v) => !v)}
-          previewOpen={previewOpen}
+      {/* Right Inspector panel */}
+      {inspectorOpen && (
+        <InspectorPanel
+          syntax={syntax}
+          onCollapse={() => setInspectorOpen(false)}
         />
+      )}
 
-        {previewOpen && (
-          <div className="absolute right-4 top-24 bottom-4 w-[400px] pointer-events-auto shadow-2xl rounded-xl overflow-hidden border border-gray-200/50 bg-white">
-            <PreviewPanel syntax={syntax} />
-          </div>
-        )}
-      </div>
+      {/* Command Palette */}
+      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
   )
 }
