@@ -171,6 +171,7 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     setDirection, setTheme, setLook, setCurveStyle,
     undo, redo, duplicateSelected,
     addSubgraph, assignToSubgraph,
+    drawingShape, setDrawingShape,
   } = useFlowStore(useShallow((s) => ({
     direction: s.direction, theme: s.theme, look: s.look, curveStyle: s.curveStyle,
     addNode: s.addNode, setNodes: s.setNodes, loadDiagram: s.loadDiagram,
@@ -179,6 +180,7 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
     setDirection: s.setDirection, setTheme: s.setTheme, setLook: s.setLook, setCurveStyle: s.setCurveStyle,
     undo: s.undo, redo: s.redo, duplicateSelected: s.duplicateSelected,
     addSubgraph: s.addSubgraph, assignToSubgraph: s.assignToSubgraph,
+    drawingShape: s.drawingShape, setDrawingShape: s.setDrawingShape,
   })))
 
   const pastLength = useFlowStore((s) => s.past.length)
@@ -205,7 +207,11 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
 
   const handleShapeClick = (shape: NodeShape) => {
     setActiveShape(shape)
-    if (hasNodeSelection) selectedNodes.forEach((n) => updateNodeShape(n.id, shape))
+    if (hasNodeSelection) {
+      selectedNodes.forEach((n) => updateNodeShape(n.id, shape))
+    } else {
+      setDrawingShape(shape)
+    }
   }
 
   const handleDirectionChange = (dir: Direction) => {
@@ -436,19 +442,23 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
       </div>
 
       {/* ── Top Center Canvas Tools ──────────────────────────────────────── */}
-      <div className="flex gap-2 mx-4 absolute left-1/2 -translate-x-1/2 z-50">
+      <div className="flex flex-col gap-1.5 mx-4 absolute left-1/2 -translate-x-1/2 z-50 items-center">
         <FloatingPanel className="shadow-lg">
           <div className="flex flex-col gap-0.5 px-2 py-1">
             <div className="flex gap-1 justify-center">
               {ALL_SHAPES.slice(0, 7).map(({ shape, label }) => (
                 <button
                   key={shape}
-                  title={hasNodeSelection ? `Change to ${label}` : label}
-                  aria-label={hasNodeSelection ? `Change to ${label}` : label}
+                  title={hasNodeSelection ? `Change to ${label}` : `Draw ${label} — click & drag on canvas`}
+                  aria-label={hasNodeSelection ? `Change to ${label}` : `Draw ${label}`}
                   onClick={() => handleShapeClick(shape)}
                   className={[
                     'w-8 h-7 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-                    displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
+                    drawingShape === shape
+                      ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm animate-pulse'
+                      : displayShape === shape && hasNodeSelection
+                      ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm'
+                      : 'hover:bg-gray-100',
                   ].join(' ')}
                 >
                   <ShapeIcon shape={shape} />
@@ -459,12 +469,16 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
               {ALL_SHAPES.slice(7).map(({ shape, label }) => (
                 <button
                   key={shape}
-                  title={hasNodeSelection ? `Change to ${label}` : label}
-                  aria-label={hasNodeSelection ? `Change to ${label}` : label}
+                  title={hasNodeSelection ? `Change to ${label}` : `Draw ${label} — click & drag on canvas`}
+                  aria-label={hasNodeSelection ? `Change to ${label}` : `Draw ${label}`}
                   onClick={() => handleShapeClick(shape)}
                   className={[
                     'w-8 h-7 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-                    displayShape === shape ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm' : 'hover:bg-gray-100',
+                    drawingShape === shape
+                      ? 'bg-blue-100 ring-2 ring-blue-500 shadow-sm animate-pulse'
+                      : displayShape === shape && hasNodeSelection
+                      ? 'bg-blue-100 ring-2 ring-blue-500/50 shadow-sm'
+                      : 'hover:bg-gray-100',
                   ].join(' ')}
                 >
                   <ShapeIcon shape={shape} />
@@ -473,16 +487,15 @@ export function Toolbar({ onTogglePreview, previewOpen }: ToolbarProps) {
             </div>
           </div>
           <Divider />
-          <div className="px-2">
-            <Btn onClick={() => addNode(activeShape)} primary title="Add node (N)">
-              + Add
-            </Btn>
-          </div>
-          <Divider />
           <Btn onClick={duplicateSelected} disabled={!hasNodeSelection} title="Duplicate (Ctrl+D)">
             ⊕ Dup
           </Btn>
         </FloatingPanel>
+        {drawingShape && !hasNodeSelection && (
+          <div className="bg-blue-600 text-white text-xs px-3 py-1 rounded-lg shadow-md pointer-events-none select-none">
+            Click &amp; drag on canvas to draw — Esc to cancel
+          </div>
+        )}
       </div>
 
       {/* ── Right side controls ─────────────────────────────────────────── */}

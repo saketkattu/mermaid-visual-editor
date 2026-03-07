@@ -243,8 +243,10 @@ export function FlowNode({ id, data, selected }: NodeProps) {
   const nodeData = data as FlowNodeData
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(nodeData.label)
+  const [isHovered, setIsHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const updateNodeLabel = useFlowStore((s) => s.updateNodeLabel)
+  const pushHistory = useFlowStore((s) => s.pushHistory)
 
   const commitLabel = useCallback(() => {
     const trimmed = draft.trim() || 'Node'
@@ -316,7 +318,15 @@ export function FlowNode({ id, data, selected }: NodeProps) {
           minHeight: isCylinder ? 80 : 54,
         }}
         onDoubleClick={handleDoubleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        <NodeResizer
+          minWidth={80}
+          minHeight={isCylinder ? 60 : 54}
+          isVisible={!!selected || isHovered}
+          onResizeEnd={() => pushHistory()}
+        />
         <svg
           className="absolute inset-0 w-full h-full overflow-visible"
           viewBox={isCylinder ? '0 0 200 120' : '0 0 200 100'}
@@ -373,12 +383,22 @@ export function FlowNode({ id, data, selected }: NodeProps) {
       extraStyle = { borderRadius: 4 }
   }
 
+  const isCircleShape = shape === 'circle' || shape === 'double-circle'
+
   return (
     <div
       className={`relative flex items-center justify-center px-4 py-2.5 cursor-pointer select-none min-w-[100px] ${extraClass}`}
       style={{ ...baseStyle, ...extraStyle }}
       onDoubleClick={handleDoubleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      <NodeResizer
+        minWidth={80}
+        minHeight={isCircleShape ? 80 : 40}
+        isVisible={!!selected || isHovered}
+        onResizeEnd={() => pushHistory()}
+      />
       <NodeHandles />
       <NodeLabel {...labelProps} />
     </div>

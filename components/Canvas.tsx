@@ -10,7 +10,7 @@ import {
   type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, type MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 
 import { useFlowStore, type FlowNodeData } from '@/lib/store'
 import { FlowNode } from './NodeTypes/FlowNode'
@@ -26,14 +26,28 @@ function CanvasInner() {
     addNode, addNodeAtPosition,
     undo, redo, duplicateSelected,
     pushHistory, assignToSubgraph,
+    drawingShape, setDrawingShape,
   } = useFlowStore()
   const { screenToFlowPosition } = useReactFlow()
+
+  // ── Draw-mode state ─────────────────────────────────────────────────────────
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+
+      // Escape → cancel draw mode
+      if (e.key === 'Escape') {
+        setDrawingShape(null)
+        setDragStart(null)
+        setDragCurrent(null)
+        return
+      }
 
       // N → add node (when not typing)
       if (!isTyping && (e.key === 'n' || e.key === 'N')) {
@@ -66,10 +80,11 @@ function CanvasInner() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [addNode, undo, redo, duplicateSelected])
+  }, [addNode, undo, redo, duplicateSelected, setDrawingShape])
 
   // ── Double-click on blank canvas → add node at cursor ─────────────────────
   const handleDoubleClick = (e: MouseEvent) => {
+    if (drawingShape) return
     const target = e.target as Element
     if (target.closest('.react-flow__node')) return
     if (target.closest('.react-flow__edge')) return
@@ -78,6 +93,58 @@ function CanvasInner() {
     const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     addNodeAtPosition(position)
   }
+
+  // ── Draw-mode mouse handlers ────────────────────────────────────────────────
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!drawingShape) return
+      const target = e.target as Element
+      if (target.closest('.react-flow__node')) return
+      if (target.closest('.react-flow__controls')) return
+      if (target.closest('.react-flow__minimap')) return
+      e.preventDefault()
+      setDragStart({ x: e.clientX, y: e.clientY })
+      setDragCurrent({ x: e.clientX, y: e.clientY })
+    },
+    [drawingShape],
+  )
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!dragStart) return
+      setDragCurrent({ x: e.clientX, y: e.clientY })
+    },
+    [dragStart],
+  )
+
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!dragStart || !drawingShape) return
+      const end = { x: e.clientX, y: e.clientY }
+
+      const dx = Math.abs(end.x - dragStart.x)
+      const dy = Math.abs(end.y - dragStart.y)
+
+      const flowStart = screenToFlowPosition({ x: dragStart.x, y: dragStart.y })
+      const flowEnd = screenToFlowPosition({ x: end.x, y: end.y })
+
+      if (dx < 20 && dy < 20) {
+        // Single click — create default-sized node
+        addNodeAtPosition(flowStart, drawingShape)
+      } else {
+        const x = Math.min(flowStart.x, flowEnd.x)
+        const y = Math.min(flowStart.y, flowEnd.y)
+        const w = Math.abs(flowEnd.x - flowStart.x)
+        const h = Math.abs(flowEnd.y - flowStart.y)
+        addNodeAtPosition({ x, y }, drawingShape, w, h)
+      }
+
+      setDragStart(null)
+      setDragCurrent(null)
+      setDrawingShape(null)
+    },
+    [dragStart, drawingShape, screenToFlowPosition, addNodeAtPosition, setDrawingShape],
+  )
 
   // ── Push history after drag ends; auto-assign/unassign group membership ─────
   const handleNodeDragStop = useCallback(
@@ -140,8 +207,36 @@ function CanvasInner() {
     [pushHistory, assignToSubgraph]
   )
 
+  const previewRect =
+    dragStart && dragCurrent
+      ? {
+          left: Math.min(dragStart.x, dragCurrent.x),
+          top: Math.min(dragStart.y, dragCurrent.y),
+          width: Math.abs(dragCurrent.x - dragStart.x),
+          height: Math.abs(dragCurrent.y - dragStart.y),
+        }
+      : null
+
+  // Offset preview rect relative to wrapper element
+  const wrapperRect = wrapperRef.current?.getBoundingClientRect()
+  const relativePreview = previewRect && wrapperRect
+    ? {
+        left: previewRect.left - wrapperRect.left,
+        top: previewRect.top - wrapperRect.top,
+        width: previewRect.width,
+        height: previewRect.height,
+      }
+    : null
+
   return (
-    <div className="w-full h-full relative" onDoubleClick={handleDoubleClick}>
+    <div
+      ref={wrapperRef}
+      className={`w-full h-full relative ${drawingShape ? 'cursor-crosshair' : ''}`}
+      onDoubleClick={handleDoubleClick}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -153,6 +248,8 @@ function CanvasInner() {
         onNodeDragStop={handleNodeDragStop}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
+        panOnDrag={!drawingShape}
+        nodesDraggable={!drawingShape}
         className="bg-[#f8f9fa]"
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#e5e7eb" />
@@ -160,12 +257,19 @@ function CanvasInner() {
         <MiniMap nodeStrokeWidth={3} zoomable pannable className="!mb-6 !mr-4 !shadow-sm !rounded-xl overflow-hidden border border-gray-200" />
       </ReactFlow>
 
-      {nodes.length === 0 && (
+      {relativePreview && relativePreview.width > 4 && relativePreview.height > 4 && (
+        <div
+          className="absolute pointer-events-none border-2 border-dashed border-blue-500 bg-blue-50/30 rounded"
+          style={relativePreview}
+        />
+      )}
+
+      {nodes.length === 0 && !drawingShape && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center text-gray-400">
             <p className="text-lg font-medium">Canvas is empty</p>
             <p className="text-sm mt-1">
-              Double-click canvas or press{' '}
+              Select a shape above and drag to draw, double-click canvas, or press{' '}
               <kbd className="px-1 py-0.5 rounded bg-gray-100 text-gray-500 text-xs font-mono">N</kbd>{' '}
               to add a node
             </p>

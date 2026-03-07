@@ -97,6 +97,8 @@ interface FlowState {
   addNodeAtPosition: (
     position: { x: number; y: number },
     shape?: NodeShape,
+    width?: number,
+    height?: number,
   ) => void;
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeShape: (id: string, shape: NodeShape) => void;
@@ -138,6 +140,10 @@ interface FlowState {
 
   // Selection operations
   duplicateSelected: () => void;
+
+  // Draw mode
+  drawingShape: NodeShape | null;
+  setDrawingShape: (shape: NodeShape | null) => void;
 }
 
 // ─── Helper: compute edge markers based on arrowType ─────────────────────────
@@ -191,6 +197,8 @@ export const useFlowStore = create<FlowState>((set, get) => {
     curveStyle: "basis",
     past: [],
     future: [],
+    drawingShape: null,
+    setDrawingShape: (shape) => set({ drawingShape: shape }),
 
     pushHistory: () => {
       const { nodes, edges, past } = get();
@@ -268,13 +276,14 @@ export const useFlowStore = create<FlowState>((set, get) => {
     }),
 
     addNodeAtPosition: withHistory(
-      (position, shape: NodeShape = "rectangle") => {
+      (position, shape: NodeShape = "rectangle", width?: number, height?: number) => {
         const id = `node_${nodeCounter++}`;
         const newNode: Node<FlowNodeData> = {
           id,
           type: "flowNode",
           position,
           data: { label: "Node", shape },
+          ...(width && height ? { style: { width, height } } : {}),
         };
         set({ nodes: [...get().nodes, newNode] });
       },
