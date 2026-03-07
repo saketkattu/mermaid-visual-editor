@@ -314,6 +314,8 @@ export function FlowNode({ id, data, selected }: NodeProps) {
       <div
         className="relative cursor-pointer select-none"
         style={{
+          width: '100%',
+          height: '100%',
           minWidth: 130,
           minHeight: isCylinder ? 80 : 54,
         }}
@@ -336,7 +338,7 @@ export function FlowNode({ id, data, selected }: NodeProps) {
         </svg>
         <div
           className="relative z-10 flex items-center justify-center w-full h-full px-8 py-3"
-          style={{ minHeight: isCylinder ? 80 : 54 }}
+          style={{ height: '100%', minHeight: isCylinder ? 80 : 54 }}
         >
           <NodeLabel {...labelProps} />
         </div>
@@ -388,7 +390,7 @@ export function FlowNode({ id, data, selected }: NodeProps) {
   return (
     <div
       className={`relative flex items-center justify-center px-4 py-2.5 cursor-pointer select-none min-w-[100px] ${extraClass}`}
-      style={{ ...baseStyle, ...extraStyle }}
+      style={{ ...baseStyle, ...extraStyle, height: '100%' }}
       onDoubleClick={handleDoubleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
