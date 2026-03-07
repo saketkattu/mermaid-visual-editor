@@ -182,12 +182,46 @@ const IS_SVG_SHAPE = new Set<NodeShape>(Object.keys(SVG_RENDERERS) as NodeShape[
 
 // ─── Four-directional handles (shown on all shapes) ──────────────────────────
 function NodeHandles() {
+  const base = {
+    zIndex: 30,
+    pointerEvents: 'all',
+  } as const
+
+  const topStyle = { ...base, top: 2 }
+  const bottomStyle = { ...base, bottom: 2 }
+  const leftStyle = { ...base, left: 2 }
+  const rightStyle = { ...base, right: 2 }
+
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="target" position={Position.Left} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="source" position={Position.Bottom} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="source" position={Position.Right} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
+      <Handle
+        id="top-target"
+        type="target"
+        position={Position.Top}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={topStyle}
+      />
+      <Handle
+        id="left-target"
+        type="target"
+        position={Position.Left}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={leftStyle}
+      />
+      <Handle
+        id="bottom-source"
+        type="source"
+        position={Position.Bottom}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={bottomStyle}
+      />
+      <Handle
+        id="right-source"
+        type="source"
+        position={Position.Right}
+        className="!bg-blue-300 hover:!bg-blue-500 !w-3 !h-3"
+        style={rightStyle}
+      />
     </>
   )
 }
@@ -243,8 +277,10 @@ export function FlowNode({ id, data, selected }: NodeProps) {
   const nodeData = data as FlowNodeData
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(nodeData.label)
+  const [isHovered, setIsHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const updateNodeLabel = useFlowStore((s) => s.updateNodeLabel)
+  const pushHistory = useFlowStore((s) => s.pushHistory)
 
   const commitLabel = useCallback(() => {
     const trimmed = draft.trim() || 'Node'
@@ -312,11 +348,21 @@ export function FlowNode({ id, data, selected }: NodeProps) {
       <div
         className="relative cursor-pointer select-none"
         style={{
+          width: '100%',
+          height: '100%',
           minWidth: 130,
           minHeight: isCylinder ? 80 : 54,
         }}
         onDoubleClick={handleDoubleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        <NodeResizer
+          minWidth={80}
+          minHeight={isCylinder ? 60 : 54}
+          isVisible={!!selected || isHovered}
+          onResizeEnd={() => pushHistory()}
+        />
         <svg
           className="absolute inset-0 w-full h-full overflow-visible"
           viewBox={isCylinder ? '0 0 200 120' : '0 0 200 100'}
@@ -326,7 +372,7 @@ export function FlowNode({ id, data, selected }: NodeProps) {
         </svg>
         <div
           className="relative z-10 flex items-center justify-center w-full h-full px-8 py-3"
-          style={{ minHeight: isCylinder ? 80 : 54 }}
+          style={{ height: '100%', minHeight: isCylinder ? 80 : 54 }}
         >
           <NodeLabel {...labelProps} />
         </div>
@@ -373,12 +419,22 @@ export function FlowNode({ id, data, selected }: NodeProps) {
       extraStyle = { borderRadius: 4 }
   }
 
+  const isCircleShape = shape === 'circle' || shape === 'double-circle'
+
   return (
     <div
       className={`relative flex items-center justify-center px-4 py-2.5 cursor-pointer select-none min-w-[100px] ${extraClass}`}
-      style={{ ...baseStyle, ...extraStyle }}
+      style={{ ...baseStyle, ...extraStyle, height: '100%' }}
       onDoubleClick={handleDoubleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      <NodeResizer
+        minWidth={80}
+        minHeight={isCircleShape ? 80 : 40}
+        isVisible={!!selected || isHovered}
+        onResizeEnd={() => pushHistory()}
+      />
       <NodeHandles />
       <NodeLabel {...labelProps} />
     </div>
