@@ -3,8 +3,6 @@
 import {
   ReactFlow,
   Background,
-  Controls,
-  MiniMap,
   BackgroundVariant,
   useReactFlow,
   type Node,
@@ -19,7 +17,11 @@ import { FlowEdge } from './EdgeTypes/FlowEdge'
 const nodeTypes = { flowNode: FlowNode }
 const edgeTypes = { flowEdge: FlowEdge }
 
-function CanvasInner() {
+interface CanvasInnerProps {
+  onOpenPalette?: () => void
+}
+
+function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
   const {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
@@ -77,10 +79,17 @@ function CanvasInner() {
         duplicateSelected()
         return
       }
+
+      // Ctrl+K / Meta+K → open command palette
+      if (ctrl && e.key === 'k') {
+        e.preventDefault()
+        onOpenPalette?.()
+        return
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [addNode, undo, redo, duplicateSelected, setDrawingShape])
+  }, [addNode, undo, redo, duplicateSelected, setDrawingShape, onOpenPalette])
 
   // ── Double-click on blank canvas → add node at cursor ─────────────────────
   const handleDoubleClick = (e: MouseEvent) => {
@@ -250,11 +259,9 @@ function CanvasInner() {
         deleteKeyCode={['Backspace', 'Delete']}
         panOnDrag={!drawingShape}
         nodesDraggable={!drawingShape}
-        className="bg-[#f8f9fa]"
+        style={{ background: 'var(--neu-bg)' }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#e5e7eb" />
-        <Controls className="!mb-6 !ml-4 border-gray-200 shadow-sm rounded-lg overflow-hidden bg-white" />
-        <MiniMap nodeStrokeWidth={3} zoomable pannable className="!mb-6 !mr-4 !shadow-sm !rounded-xl overflow-hidden border border-gray-200" />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={2} color="#d1d9e6" />
       </ReactFlow>
 
       {relativePreview && relativePreview.width > 4 && relativePreview.height > 4 && (
@@ -280,6 +287,6 @@ function CanvasInner() {
   )
 }
 
-export function Canvas() {
-  return <CanvasInner />
+export function Canvas({ onOpenPalette }: { onOpenPalette?: () => void }) {
+  return <CanvasInner onOpenPalette={onOpenPalette} />
 }
