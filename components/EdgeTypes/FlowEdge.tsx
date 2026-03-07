@@ -92,20 +92,13 @@ export function FlowEdge({
               onKeyDown={handleKeyDown}
               placeholder="label…"
               className="text-xs px-2 py-0.5 rounded border border-blue-400 bg-white shadow-sm outline-none w-28 text-center"
-              aria-label="Edge label"
             />
           ) : displayLabel ? (
-            <span
-              className="text-xs px-2 py-0.5 rounded bg-white border border-gray-200 shadow-sm text-gray-700 cursor-pointer hover:border-blue-300"
-              title="Double-click to edit"
-            >
+            <span className="text-xs px-2 py-0.5 rounded bg-white border border-gray-200 shadow-sm text-gray-700 cursor-pointer hover:border-blue-300">
               {displayLabel}
             </span>
           ) : (
-            <span
-              className="text-xs px-1 py-0.5 rounded text-gray-300 cursor-pointer hover:text-gray-400 hover:bg-white/80 select-none"
-              title="Double-click to edit"
-            >
+            <span className="text-xs px-1 py-0.5 rounded text-gray-300 cursor-pointer hover:text-gray-400 hover:bg-white/80 select-none">
               ✎
             </span>
           )}
