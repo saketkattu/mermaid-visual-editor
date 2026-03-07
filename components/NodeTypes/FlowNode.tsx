@@ -232,6 +232,7 @@ function NodeLabel({
     <span
       className="text-center break-words text-sm font-medium leading-snug select-none"
       style={{ color: color || '#1f2937' }}
+      title="Double-click to edit"
     >
       {value}
     </span>
