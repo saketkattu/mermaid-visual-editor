@@ -182,12 +182,13 @@ const IS_SVG_SHAPE = new Set<NodeShape>(Object.keys(SVG_RENDERERS) as NodeShape[
 
 // ─── Four-directional handles (shown on all shapes) ──────────────────────────
 function NodeHandles() {
+  const s = { zIndex: 10 } as const
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="target" position={Position.Left} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="source" position={Position.Bottom} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
-      <Handle type="source" position={Position.Right} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" />
+      <Handle type="target" position={Position.Top} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
+      <Handle type="target" position={Position.Left} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
+      <Handle type="source" position={Position.Bottom} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
+      <Handle type="source" position={Position.Right} className="!bg-blue-300 hover:!bg-blue-500 !w-2.5 !h-2.5" style={s} />
     </>
   )
 }
