@@ -6,7 +6,8 @@ No account. No cloud. Runs locally.
 
 **[Try the live demo](https://mermaid-visual-editor-delta.vercel.app/)**
 
-![Mermaid Visual Editor screenshot](docs/screenshot.png)
+![Mermaid Visual Editor screenshot](<img width="1914" height="904" alt="image" src="https://github.com/user-attachments/assets/315bcdb4-aa64-4b33-9ab9-457a3d79fec8" />
+)
 
 Mermaid Visual Editor lets you draw flowcharts by dragging nodes and connecting edges on an infinite canvas. Mermaid syntax is generated automatically — you never hand-type it. Built with Next.js, React Flow, Zustand, and Mermaid.js.
 
