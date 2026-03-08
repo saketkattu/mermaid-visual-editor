@@ -12,6 +12,7 @@
     "mermaid.js",
     "react-flow"
   ],
+  "license": "MIT",
   "author": "Saket Kattuboina",
   "homepage": "https://mermaid-visual-editor-delta.vercel.app/",
   "repository": {
