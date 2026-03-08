@@ -90,20 +90,6 @@ const IconCube = () => (
 )
 
 
-const IconUndo = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 14 4 9 9 4" />
-    <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
-  </svg>
-)
-
-const IconRedo = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 14 20 9 15 4" />
-    <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
-  </svg>
-)
-
 const IconCopy = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -124,16 +110,13 @@ export function TopToolbar({ inspectorOpen, onToggleInspector, onOpenPalette, sy
   const [importOpen, setImportOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const { undo, redo, setDrawingShape, addSubgraph } = useFlowStore(
+  const { setDrawingShape, addSubgraph } = useFlowStore(
     useShallow((s) => ({
-      undo: s.undo, redo: s.redo,
       setDrawingShape: s.setDrawingShape,
       addSubgraph: s.addSubgraph,
     }))
   )
 
-  const pastLength = useFlowStore((s) => s.past.length)
-  const futureLength = useFlowStore((s) => s.future.length)
   const drawingShape = useFlowStore((s) => s.drawingShape)
   const shapePickerRef = useRef<HTMLDivElement>(null)
   const settingsRef = useRef<HTMLDivElement>(null)
@@ -181,16 +164,9 @@ export function TopToolbar({ inspectorOpen, onToggleInspector, onOpenPalette, sy
           {shapePickerOpen && <ShapePickerPopover onClose={() => setShapePickerOpen(false)} />}
         </div>
 
-        <Divider />
-
-        {/* Undo */}
-        <NeuIconBtn onClick={undo} disabled={pastLength === 0} title="Undo (Ctrl+Z)">
-          <IconUndo />
-        </NeuIconBtn>
-
-        {/* Redo */}
-        <NeuIconBtn onClick={redo} disabled={futureLength === 0} title="Redo (Ctrl+Shift+Z)">
-          <IconRedo />
+        {/* Add Group — next to shape picker */}
+        <NeuIconBtn onClick={() => addSubgraph()} title="Add a group/subgraph container">
+          ⬡
         </NeuIconBtn>
 
         <Divider />
@@ -207,11 +183,6 @@ export function TopToolbar({ inspectorOpen, onToggleInspector, onOpenPalette, sy
         {/* Copy syntax */}
         <NeuIconBtn onClick={handleCopy} active={copied} title="Copy Mermaid syntax">
           <IconCopy />
-        </NeuIconBtn>
-
-        {/* Add Group */}
-        <NeuIconBtn onClick={() => addSubgraph()} title="Add a group/subgraph container">
-          ⬡
         </NeuIconBtn>
 
         {/* Command palette trigger */}

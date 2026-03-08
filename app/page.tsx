@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { Canvas } from '@/components/Canvas'
 import { TopToolbar } from '@/components/TopToolbar'
-import { SearchBar } from '@/components/SearchBar'
 import { ZoomControls } from '@/components/ZoomControls'
 import { InspectorPanel } from '@/components/Inspector/InspectorPanel'
 import { CommandPalette } from '@/components/CommandPalette'
@@ -33,7 +32,7 @@ function EditorContent() {
       <div style={{ position: 'relative', flex: 1, background: 'var(--neu-bg)' }}>
         <Canvas onOpenPalette={() => setPaletteOpen(true)} />
 
-        {/* Top overlay — toolbar + searchbar */}
+        {/* Top overlay — toolbar */}
         <div
           style={{
             position: 'absolute',
@@ -41,9 +40,7 @@ function EditorContent() {
             left: 0,
             right: 0,
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 10,
+            justifyContent: 'center',
             zIndex: 20,
             pointerEvents: 'none',
           }}
@@ -54,7 +51,6 @@ function EditorContent() {
             onOpenPalette={() => setPaletteOpen(true)}
             syntax={syntax}
           />
-          <SearchBar onOpen={() => setPaletteOpen(true)} />
         </div>
 
         {/* Zoom controls */}
