@@ -10,7 +10,26 @@ No account. No cloud. Runs locally.
 
 Mermaid Visual Editor lets you draw flowcharts by dragging nodes and connecting edges on an infinite canvas. Mermaid syntax is generated automatically — you never hand-type it. Built with Next.js, React Flow, Zustand, and Mermaid.js.
 
-### Quick Start
+### Install & Run
+
+**Global install (recommended for repeat use):**
+```bash
+npm install -g mermaid-visual-editor
+mermaid-visual-editor
+```
+
+**One-off (no install):**
+```bash
+npx mermaid-visual-editor
+```
+
+Both commands serve the app and open your browser at [http://localhost:3000](http://localhost:3000).
+
+**Requirements:** Node.js 18+
+
+---
+
+### Development Setup
 
 ```bash
 git clone https://github.com/saketkattu/mermaid-visual-editor.git
@@ -180,13 +199,36 @@ The canvas state is canonical. Mermaid syntax is always derived — never parsed
 
 ## Contributing
 
-PRs welcome. Open an issue first for large changes.
+PRs welcome. Open an issue first for large changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ```bash
 pnpm dev     # development server
-pnpm build   # production build
+pnpm build   # production build → generates out/
 pnpm lint    # lint
+pnpm audit   # security audit
 ```
+
+### CI
+
+Every push and PR against `master` runs lint, audit, and build automatically via GitHub Actions.
+
+### Releases
+
+Releases are fully automated — do not manually edit the version in `package.json`.
+
+1. Update `CHANGELOG.md` — move items from `[Unreleased]` to a new versioned section
+2. Go to **Actions → Release → Run workflow**
+3. Choose the bump type (`patch` / `minor` / `major`)
+
+The workflow bumps `package.json`, commits, tags, publishes to npm, and creates a GitHub Release.
+
+> **Required secret:** add `NPM_TOKEN` to repo Settings → Secrets → Actions before triggering a release.
+
+---
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
 
 ---
 
