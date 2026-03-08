@@ -2,16 +2,20 @@
 
 import { useReactFlow } from '@xyflow/react'
 import { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+import { useFlowStore } from '@/lib/store'
 
 const NEU_BG = 'var(--neu-bg)'
 
 function ZoomBtn({
   onClick,
   title,
+  disabled,
   children,
 }: {
   onClick: () => void
   title: string
+  disabled?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -19,6 +23,7 @@ function ZoomBtn({
       onClick={onClick}
       title={title}
       aria-label={title}
+      disabled={disabled}
       style={{
         background: NEU_BG,
         border: 'none',
@@ -29,7 +34,8 @@ function ZoomBtn({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
         color: '#6B7280',
         fontSize: 16,
         fontWeight: 500,
@@ -42,9 +48,26 @@ function ZoomBtn({
   )
 }
 
+const IconUndo = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 14 4 9 9 4" />
+    <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+  </svg>
+)
+
+const IconRedo = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 14 20 9 15 4" />
+    <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+  </svg>
+)
+
 export function ZoomControls() {
   const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow()
   const [zoom, setZoom] = useState<number | null>(null)
+  const { undo, redo } = useFlowStore(useShallow((s) => ({ undo: s.undo, redo: s.redo })))
+  const pastLength = useFlowStore((s) => s.past.length)
+  const futureLength = useFlowStore((s) => s.future.length)
 
   const handleZoomIn = () => {
     zoomIn()
@@ -78,6 +101,15 @@ export function ZoomControls() {
         zIndex: 10,
       }}
     >
+      <ZoomBtn onClick={undo} title="Undo (Ctrl+Z)" disabled={pastLength === 0}>
+        <IconUndo />
+      </ZoomBtn>
+      <ZoomBtn onClick={redo} title="Redo (Ctrl+Shift+Z)" disabled={futureLength === 0}>
+        <IconRedo />
+      </ZoomBtn>
+
+      <div style={{ width: 1, height: 16, background: 'rgba(163,177,198,0.4)', margin: '0 2px', flexShrink: 0 }} />
+
       <ZoomBtn onClick={handleZoomOut} title="Zoom out">−</ZoomBtn>
 
       <button

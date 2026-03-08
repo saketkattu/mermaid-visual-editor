@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useFlowStore } from '@/lib/store'
 import { applyDagreLayout } from '@/lib/layout'
@@ -36,19 +37,49 @@ function IconAutoLayout() {
   )
 }
 
-function Separator() {
+function AccordionSection({
+  title,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string
+  open: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
   return (
-    <div
-      style={{
-        height: 1,
-        background: 'rgba(163,177,198,0.35)',
-        margin: '16px 0',
-      }}
-    />
+    <div>
+      <button
+        onClick={onToggle}
+        style={{
+          width: '100%',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 0 8px',
+          color: '#374151',
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span>{title}</span>
+        <span style={{ fontSize: 10, color: '#9ca3af', transition: 'transform 0.15s', display: 'inline-block', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
+      </button>
+      <div style={{ height: 1, background: 'rgba(163,177,198,0.35)', marginBottom: open ? 10 : 0 }} />
+      {open && <div style={{ paddingBottom: 8 }}>{children}</div>}
+    </div>
   )
 }
 
 export function InspectorPanel({ syntax, onCollapse }: InspectorPanelProps) {
+  const [objectOpen, setObjectOpen] = useState(true)
+  const [diagramOpen, setDiagramOpen] = useState(true)
   const { setNodes } = useFlowStore(useShallow((s) => ({ setNodes: s.setNodes })))
   const nodesLength = useFlowStore((s) => s.nodes.length)
 
@@ -143,10 +174,14 @@ export function InspectorPanel({ syntax, onCollapse }: InspectorPanelProps) {
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px 20px' }}>
-        <ObjectSettingsSection />
-        <Separator />
-        <DiagramSettingsSection />
-        <Separator />
+        <AccordionSection title="Object Settings" open={objectOpen} onToggle={() => setObjectOpen((v) => !v)}>
+          <ObjectSettingsSection />
+        </AccordionSection>
+        <div style={{ height: 8 }} />
+        <AccordionSection title="Diagram Settings" open={diagramOpen} onToggle={() => setDiagramOpen((v) => !v)}>
+          <DiagramSettingsSection />
+        </AccordionSection>
+        <div style={{ height: 8 }} />
         <MermaidLiveSection syntax={syntax} />
       </div>
     </div>
