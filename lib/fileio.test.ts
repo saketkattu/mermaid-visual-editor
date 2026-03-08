@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { test, describe, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert'
 import { loadDiagramJson } from './fileio.ts'

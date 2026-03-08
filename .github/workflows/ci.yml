@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: latest }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'pnpm' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm audit --audit-level moderate
+        continue-on-error: true   # informational; flip to false to make blocking
+      - run: pnpm build
+      - name: Verify out/ exists
+        run: |
+          [ -d "out" ] || (echo "ERROR: out/ not created"; exit 1)
+          echo "Build OK"; ls out/ | head -10

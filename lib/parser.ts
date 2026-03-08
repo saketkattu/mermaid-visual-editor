@@ -118,7 +118,7 @@ function extractNodeRef(str: string): NodeRef | null {
   if (!idMatch) return null
 
   const id = idMatch[1]
-  let after = str.slice(id.length)
+  const after = str.slice(id.length)
 
   // If there's no shape suffix, it's a bare ID
   if (!after || /^\s/.test(after[0])) {
@@ -248,7 +248,7 @@ function matchConnector(str: string): ConnectorMatch | null {
   for (const c of CONNECTORS) {
     const m = str.match(c.pattern)
     if (m) {
-      let rest = str.slice(m[0].length)
+      const rest = str.slice(m[0].length)
       // Check for |label| or |"label"| after connector
       const labelMatch = rest.match(/^\|"?([^"|]*)"?\|(.*)$/)
       if (labelMatch) {

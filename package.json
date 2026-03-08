@@ -1,11 +1,20 @@
 {
   "name": "mermaid-visual-editor",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "Visual drag-and-drop editor for Mermaid.js diagrams. Build flowcharts visually — export clean .mmd syntax.",
+  "keywords": ["mermaid", "diagram", "flowchart", "visual-editor", "drag-and-drop", "mermaid.js", "react-flow"],
+  "author": "Saket Kattuboina",
+  "homepage": "https://mermaid-visual-editor-delta.vercel.app/",
+  "repository": { "type": "git", "url": "https://github.com/saketkattu/mermaid-visual-editor.git" },
+  "bugs": { "url": "https://github.com/saketkattu/mermaid-visual-editor/issues" },
+  "engines": { "node": ">=18" },
+  "bin": { "mermaid-visual-editor": "./bin/cli.js" },
+  "files": ["out/", "bin/", "README.md", "LICENSE"],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node bin/cli.js",
     "lint": "eslint"
   },
   "dependencies": {
@@ -15,6 +24,7 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serve": "^14.2.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
