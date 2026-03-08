@@ -140,9 +140,6 @@ interface FlowState {
 
   // Selection operations
   duplicateSelected: () => void;
-  clipboard: { nodes: Node<FlowNodeData>[]; edges: Edge<FlowEdgeData>[] } | null;
-  copySelected: () => void;
-  pasteClipboard: () => void;
 
   // Draw mode
   drawingShape: NodeShape | null;
@@ -200,7 +197,6 @@ export const useFlowStore = create<FlowState>((set, get) => {
     curveStyle: "basis",
     past: [],
     future: [],
-    clipboard: null,
     drawingShape: null,
     setDrawingShape: (shape) => set({ drawingShape: shape }),
 
@@ -416,51 +412,6 @@ export const useFlowStore = create<FlowState>((set, get) => {
     setTheme: (theme) => set({ theme }),
     setLook: (look) => set({ look }),
     setCurveStyle: (curveStyle) => set({ curveStyle }),
-
-    copySelected: () => {
-      const { nodes, edges } = get();
-      const selectedNodes = nodes.filter((n) => n.selected);
-      if (selectedNodes.length === 0) return;
-      const selectedIds = new Set(selectedNodes.map((n) => n.id));
-      const selectedEdges = edges.filter(
-        (e) => selectedIds.has(e.source) && selectedIds.has(e.target),
-      );
-      set({ clipboard: { nodes: selectedNodes, edges: selectedEdges } });
-    },
-
-    pasteClipboard: withHistory(() => {
-      const { clipboard, nodes, edges } = get();
-      if (!clipboard || clipboard.nodes.length === 0) return;
-
-      const idMap = new Map<string, string>();
-
-      const newNodes = clipboard.nodes.map((n) => {
-        const newId = `node_${nodeCounter++}`;
-        idMap.set(n.id, newId);
-        return {
-          ...n,
-          id: newId,
-          selected: true,
-          position: { x: n.position.x + 40, y: n.position.y + 40 },
-          parentId: n.parentId && idMap.has(n.parentId) ? idMap.get(n.parentId) : undefined,
-        };
-      });
-
-      const newEdges = clipboard.edges
-        .filter((e) => idMap.has(e.source) && idMap.has(e.target))
-        .map((e) => ({
-          ...e,
-          id: `edge_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          source: idMap.get(e.source)!,
-          target: idMap.get(e.target)!,
-          selected: true,
-        }));
-
-      set({
-        nodes: [...nodes.map((n) => ({ ...n, selected: false })), ...newNodes],
-        edges: [...edges.map((e) => ({ ...e, selected: false })), ...newEdges],
-      });
-    }),
 
     duplicateSelected: withHistory(() => {
       const { nodes, edges } = get();

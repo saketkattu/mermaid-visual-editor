@@ -26,7 +26,7 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
     nodes, edges,
     onNodesChange, onEdgesChange, onConnect,
     addNode, addNodeAtPosition,
-    undo, redo, duplicateSelected, copySelected, pasteClipboard,
+    undo, redo, duplicateSelected,
     pushHistory, assignToSubgraph,
     drawingShape, setDrawingShape,
   } = useFlowStore()
@@ -80,20 +80,6 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
         return
       }
 
-      // Ctrl+C → copy selected
-      if (ctrl && !e.shiftKey && e.key === 'c') {
-        e.preventDefault()
-        copySelected()
-        return
-      }
-
-      // Ctrl+V → paste clipboard
-      if (ctrl && !e.shiftKey && e.key === 'v') {
-        e.preventDefault()
-        pasteClipboard()
-        return
-      }
-
       // Ctrl+K / Meta+K → open command palette
       if (ctrl && e.key === 'k') {
         e.preventDefault()
@@ -103,7 +89,7 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [addNode, undo, redo, duplicateSelected, copySelected, pasteClipboard, setDrawingShape, onOpenPalette])
+  }, [addNode, undo, redo, duplicateSelected, setDrawingShape, onOpenPalette])
 
   // ── Double-click on blank canvas → add node at cursor ─────────────────────
   const handleDoubleClick = (e: MouseEvent) => {
@@ -271,9 +257,7 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
         onNodeDragStop={handleNodeDragStop}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
-        panOnDrag={drawingShape ? false : [1, 2]}
-        selectionOnDrag={!drawingShape}
-        multiSelectionKeyCode={['Shift', 'Control']}
+        panOnDrag={!drawingShape}
         nodesDraggable={!drawingShape}
         style={{ background: 'var(--neu-bg)' }}
       >
@@ -292,9 +276,9 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
           <div className="text-center text-gray-400">
             <p className="text-lg font-medium">Canvas is empty</p>
             <p className="text-sm mt-1">
-                Select a shape above and drag to draw, double-click canvas, or press{' '}
+              Select a shape above and drag to draw, double-click canvas, or press{' '}
               <kbd className="px-1 py-0.5 rounded bg-gray-100 text-gray-500 text-xs font-mono">N</kbd>{' '}
-              to add a node. Drag on empty canvas to select multiple nodes.
+              to add a node
             </p>
           </div>
         </div>
