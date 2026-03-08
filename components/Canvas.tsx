@@ -241,6 +241,7 @@ function CanvasInner({ onOpenPalette }: CanvasInnerProps) {
       : null
 
   // Offset preview rect relative to wrapper element
+  // eslint-disable-next-line react-hooks/refs
   const wrapperRect = wrapperRef.current?.getBoundingClientRect()
   const relativePreview = previewRect && wrapperRect
     ? {
