@@ -256,7 +256,7 @@ function NodeLabel({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={onCommit}
         onKeyDown={onKeyDown}
-        className="bg-transparent border-none outline-none text-center text-sm w-full"
+        className="bg-transparent border-none outline-none text-center text-sm w-full focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
         autoFocus
         aria-label="Node label"
       />
@@ -266,6 +266,10 @@ function NodeLabel({
     <span
       className="text-center break-words text-sm font-medium leading-snug select-none"
       style={{ color: color || '#1f2937' }}
+      title="Double-click to edit"
+      aria-label="Node label"
+      role="button"
+      tabIndex={0}
     >
       {value}
     </span>
