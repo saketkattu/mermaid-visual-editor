@@ -82,6 +82,8 @@ export function FlowEdge({
             setDraft((label as string) ?? '')
             setEditing(true)
           }}
+          title="Double-click to edit"
+          aria-label={`${displayLabel || 'Edge'} (Double-click to edit)`}
         >
           {editing ? (
             <input
