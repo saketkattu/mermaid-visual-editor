@@ -330,6 +330,8 @@ export function FlowNode({ id, data, selected }: NodeProps) {
           backgroundColor: nodeData.fillColor ? nodeData.fillColor : 'rgba(59,130,246,0.04)',
         }}
         onDoubleClick={handleDoubleClick}
+        title="Double-click to edit"
+        aria-label={`${nodeData.label} (Double-click to edit)`}
       >
         <NodeResizer minWidth={200} minHeight={120} isVisible={!!selected} />
         <div className={`absolute top-2 left-3 text-xs font-semibold text-gray-500 ${editing ? '' : 'select-none pointer-events-none'}`}>
@@ -356,6 +358,8 @@ export function FlowNode({ id, data, selected }: NodeProps) {
         onDoubleClick={handleDoubleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        title="Double-click to edit"
+        aria-label={`${nodeData.label} (Double-click to edit)`}
       >
         <NodeResizer
           minWidth={80}
@@ -428,6 +432,8 @@ export function FlowNode({ id, data, selected }: NodeProps) {
       onDoubleClick={handleDoubleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      title="Double-click to edit"
+      aria-label={`${nodeData.label} (Double-click to edit)`}
     >
       <NodeResizer
         minWidth={80}
