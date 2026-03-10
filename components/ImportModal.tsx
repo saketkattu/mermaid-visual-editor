@@ -79,7 +79,7 @@ export function ImportModal({ onClose }: ImportModalProps) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
             <h2 id="import-modal-title" className="text-sm font-semibold text-gray-900">Import Mermaid Syntax</h2>
-            <p id="import-modal-desc" className="text-xs text-gray-400 mt-0.5">Paste a flowchart definition to load it onto the canvas</p>
+            <p id="import-modal-desc" className="text-xs text-gray-400 mt-0.5">Paste a flowchart definition (flowchart or graph) to load it onto the canvas</p>
           </div>
           <button
             onClick={onClose}

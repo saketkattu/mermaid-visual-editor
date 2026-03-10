@@ -347,8 +347,8 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
         continue
       }
 
-      // ── Flowchart header
-      const headerMatch = line.match(/^flowchart\s+(TD|LR|BT|RL)/)
+      // ── Flowchart header (supports both `flowchart` and legacy `graph` keyword)
+      const headerMatch = line.match(/^(?:flowchart|graph)\s+(TD|LR|BT|RL)/)
       if (headerMatch) {
         direction = headerMatch[1] as Direction
         foundHeader = true
@@ -440,7 +440,7 @@ export function parseMermaidFlowchart(syntax: string): ParseResult {
     }
 
     if (!foundHeader) {
-      return { ...empty, error: 'No valid flowchart header found. Start with "flowchart TD" (or LR/BT/RL).' }
+      return { ...empty, error: 'No valid flowchart header found. Start with "flowchart TD" or "graph TD" (also LR/BT/RL).' }
     }
 
     if (nodesMap.size === 0) {
