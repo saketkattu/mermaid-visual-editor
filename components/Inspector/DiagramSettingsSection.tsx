@@ -22,6 +22,7 @@ function NeuBtn({
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
       style={{
         background: NEU_BG,
         border: 'none',
