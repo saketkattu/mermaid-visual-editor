@@ -110,6 +110,7 @@ function ExpandModal({ syntax, onClose }: { syntax: string; onClose: () => void 
             </button>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               style={{
                 background: NEU_BG,
                 border: 'none',
@@ -197,6 +198,7 @@ export function MermaidLiveSection({ syntax }: MermaidLiveSectionProps) {
           <button
             onClick={() => setExpanded(true)}
             title="Expand preview"
+            aria-label="Expand preview"
             style={{
               background: NEU_BG,
               border: 'none',
