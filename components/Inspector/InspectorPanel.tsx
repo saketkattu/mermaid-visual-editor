@@ -52,6 +52,8 @@ function AccordionSection({
     <div>
       <button
         onClick={onToggle}
+        aria-expanded={open}
+        aria-label={`Toggle ${title}`}
         style={{
           width: '100%',
           background: 'none',
