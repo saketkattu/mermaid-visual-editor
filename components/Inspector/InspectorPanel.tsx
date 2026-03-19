@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useFlowStore } from '@/lib/store'
 import { applyDagreLayout } from '@/lib/layout'
@@ -48,10 +48,15 @@ function AccordionSection({
   onToggle: () => void
   children: React.ReactNode
 }) {
+  const contentId = useId()
   return (
     <div>
       <button
         onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={contentId}
+        aria-label={`Toggle ${title}`}
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         style={{
           width: '100%',
           background: 'none',
@@ -72,7 +77,7 @@ function AccordionSection({
         <span style={{ fontSize: 10, color: '#9ca3af', transition: 'transform 0.15s', display: 'inline-block', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
       </button>
       <div style={{ height: 1, background: 'rgba(163,177,198,0.35)', marginBottom: open ? 10 : 0 }} />
-      {open && <div style={{ paddingBottom: 8 }}>{children}</div>}
+      {open && <div id={contentId} style={{ paddingBottom: 8 }}>{children}</div>}
     </div>
   )
 }
@@ -123,6 +128,7 @@ export function InspectorPanel({ syntax, onCollapse }: InspectorPanelProps) {
             disabled={nodesLength === 0}
             title="Auto-arrange nodes into a hierarchy"
             aria-label="Auto Layout"
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             style={{
               background: NEU_BG,
               border: 'none',
@@ -151,6 +157,7 @@ export function InspectorPanel({ syntax, onCollapse }: InspectorPanelProps) {
             onClick={onCollapse}
           title="Collapse inspector"
           aria-label="Collapse inspector"
+          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           style={{
             background: NEU_BG,
             border: 'none',
