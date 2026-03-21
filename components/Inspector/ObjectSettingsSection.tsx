@@ -23,6 +23,8 @@ function NeuBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-label={title}
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       style={{
         background: NEU_BG,
         border: 'none',
@@ -78,6 +80,7 @@ function ColorSwatch({
           overflow: 'hidden',
           position: 'relative',
         }}
+        className="focus-within:ring-2 focus-within:ring-indigo-500 focus-within:outline-none"
       >
         <input
           type="color"
