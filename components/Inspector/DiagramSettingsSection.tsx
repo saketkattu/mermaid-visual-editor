@@ -22,6 +22,8 @@ function NeuBtn({
     <button
       onClick={onClick}
       title={title}
+      aria-label={title}
+      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       style={{
         background: NEU_BG,
         border: 'none',
@@ -115,7 +117,7 @@ export function DiagramSettingsSection() {
         {/* Theme */}
         <div style={subLabelStyle}>Theme</div>
         <div style={{ marginBottom: 10 }}>
-          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} style={selectStyle} aria-label="Theme">
+          <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)} className="focus-visible:ring-2 focus-visible:ring-indigo-500" style={selectStyle} aria-label="Theme">
             {THEMES.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
             ))}
@@ -125,7 +127,7 @@ export function DiagramSettingsSection() {
         {/* Curve Style */}
         <div style={subLabelStyle}>Curve Style</div>
         <div style={{ marginBottom: 10 }}>
-          <select value={curveStyle} onChange={(e) => setCurveStyle(e.target.value as CurveStyle)} style={selectStyle} aria-label="Curve Style">
+          <select value={curveStyle} onChange={(e) => setCurveStyle(e.target.value as CurveStyle)} className="focus-visible:ring-2 focus-visible:ring-indigo-500" style={selectStyle} aria-label="Curve Style">
             {CURVE_STYLES.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
             ))}
